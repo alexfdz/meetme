@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:ViewNavigatorApplication xmlns:fx="http://ns.adobe.com/mxml/2009"
+							xmlns:s="library://ns.adobe.com/flex/spark"
+							xmlns:context="org.spicefactory.parsley.dsl.context.*"
+							xmlns:ns="http://www.spicefactory.org/parsley"
+							applicationDPI="320"
+							firstView="views.login.MeetmeLoginView">
+	<fx:Script>
+		<![CDATA[
+			import config.MeetmeContext;
+			
+			import org.spicefactory.parsley.flex.FlexContextBuilder;
+		]]>
+	</fx:Script>
+	<fx:Declarations>
+		<ns:ContextBuilder>
+			<ns:FlexConfig type="{MeetmeContext}"/>
+		</ns:ContextBuilder>
+	</fx:Declarations>
+</s:ViewNavigatorApplication>
