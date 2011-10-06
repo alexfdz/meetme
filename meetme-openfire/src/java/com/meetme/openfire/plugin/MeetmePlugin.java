@@ -5,98 +5,56 @@
 package com.meetme.openfire.plugin;
 
 import java.io.File;
-import java.util.Map;
 
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
-import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.openfire.interceptor.InterceptorManager;
+import org.jivesoftware.openfire.interceptor.PacketInterceptor;
+import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.component.Component;
-import org.xmpp.component.ComponentException;
-import org.xmpp.component.ComponentManager;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 /**
  * @author alex
  *
  */
-public class MeetmePlugin implements Component, Plugin, PropertyEventListener {
+public class MeetmePlugin implements Plugin, PacketInterceptor {
 	
-	private static final Logger Log = LoggerFactory.getLogger(MeetmePlugin.class);
+	private static final Logger log = LoggerFactory.getLogger(MeetmePlugin.class);
+	//Hook for intercpetorn
+    private InterceptorManager interceptorManager;
+	
+    private static PluginManager pluginManager;
+
+    public MeetmePlugin() {
+        interceptorManager = InterceptorManager.getInstance();
+    }
 
 	@Override
-	public void propertyDeleted(String arg0, Map<String, Object> arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void propertySet(String arg0, Map<String, Object> arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void xmlPropertyDeleted(String arg0, Map<String, Object> arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void xmlPropertySet(String arg0, Map<String, Object> arg1) {
-		// TODO Auto-generated method stub
-		
+	public void initializePlugin(PluginManager manager, File pluginDirectory) {
+		log.info("Meetme plugin loaded...");
+        interceptorManager.addInterceptor(this);
+        pluginManager = manager;
 	}
 
 	@Override
 	public void destroyPlugin() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void initializePlugin(PluginManager arg0, File arg1) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getDescription() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void initialize(JID arg0, ComponentManager arg1)
-			throws ComponentException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void processPacket(Packet arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void shutdown() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void start() {
-		// TODO Auto-generated method stub
-		
+		// unregister with interceptor manager
+        interceptorManager.removeInterceptor(this);
+        log.info("Meetme plugin destroyed");
 	}
 	
+	public static PluginManager getPluginManager() {
+        return pluginManager;
+    }
+	
+	@Override
+	public void interceptPacket(Packet packet, Session session, boolean incoming, boolean processed) throws PacketRejectedException {
+        if (processed) {
+            return;
+        }
+        log.info("packet.xml : " + packet.toXML());
+    }
 }

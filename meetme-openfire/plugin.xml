@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <plugin>
     <!-- Main plugin class -->
     <class>com.meetme.openfire.plugin.MeetmePlugin</class>
@@ -6,9 +7,8 @@
     <!-- Plugin meta-data -->
     <name>Meetme Plugin</name>
     <description>Plugin for Meetme messages process.</description>
-    <author>Jive Software</author>
-
-    <version>1.0</version>
+    <author></author>
+    <version>1.0.0</version>
     <date>05/10/2011</date>
     <url></url>
     <minServerVersion>3.0.0</minServerVersion>

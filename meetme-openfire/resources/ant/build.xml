@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<!--
+    A incluir en openfire_src/build/build.xml
+-->
+
+<property name="plugin.dev.dir" value="/home/alex/git/meetme"/>
+
+<target name="meetme-openfire" if="plugin.dev.dir">
+	<buildplugin plugin="meetme-openfire" pluginsrc="${plugin.dev.dir}"/>
+	<copy todir="${target.dir}/openfire/plugins" failonerror="false" overwrite="true" 
+		file="${plugin.dest.dir}/meetme-openfire.jar"/>
+</target>
