@@ -11,8 +11,10 @@
     <version>1.0.0</version>
     <date>05/10/2011</date>
     <url></url>
-    <minServerVersion>3.0.0</minServerVersion>
-    <licenseType>gpl</licenseType>
-    <adminconsole>
-    </adminconsole>
+    <minServerVersion>3.7.0</minServerVersion>
+    <!--
+    <databaseKey>meetme</databaseKey>
+    <databaseVersion>0</databaseVersion>
+    -->
+    <licenseType>commercial</licenseType>
 </plugin>

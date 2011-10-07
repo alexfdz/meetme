@@ -6,7 +6,7 @@
 
 <property name="plugin.dev.dir" value="/home/alex/git/meetme"/>
 
-<target name="meetme-openfire" if="plugin.dev.dir">
+<target name="meetme" if="plugin.dev.dir">
 	<buildplugin plugin="meetme-openfire" pluginsrc="${plugin.dev.dir}"/>
 	<copy todir="${target.dir}/openfire/plugins" failonerror="false" overwrite="true" 
 		file="${plugin.dest.dir}/meetme-openfire.jar"/>
