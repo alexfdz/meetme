@@ -69,20 +69,23 @@ public class MeetmePlugin implements Plugin, PacketInterceptor {
 		if (processed || !incoming) {
             return;
         }
-		PacketExtension extension = packet.getExtension(MeetmeMessage.ELEMENT_NAME, MeetmeMessage.NAMESPACE);
-        if (extension instanceof MeetmeMessage) {
-        	MeetmeMessage meetPacket = (MeetmeMessage) extension;
-        	log.info("Meet Message.... ");
-        	log.info("from : " + packet.getFrom().getNode());
-        	log.info("to : " + packet.getTo().getNode());
-        	log.info("type : " + ((Message)packet).getType());
-        	log.info("id : " + meetPacket.getId());
-        	log.info("action : " + meetPacket.getAction());
-        	log.info("status : " + meetPacket.getStatus());
-        	log.info("description : " + meetPacket.getDescription());
-        	log.info("position : " + meetPacket.getPosition());
-        	log.info("time : " + meetPacket.getTime());
-        	log.info(".....................");
-        }
+		if(packet instanceof Message){
+			PacketExtension extension = packet.getExtension(MeetmeMessage.ELEMENT_NAME, MeetmeMessage.NAMESPACE);
+	        if (extension instanceof MeetmeMessage) {
+	        	//TODO: Hacer un manager que procese el mensaje, actualize la bbdd y podifique si hace falta el mensaje
+	        	MeetmeMessage meetPacket = (MeetmeMessage) extension;
+	        	log.info("Meet Message.... ");
+	        	log.info("from : " + packet.getFrom().getNode());
+	        	log.info("to : " + packet.getTo().getNode());
+	        	log.info("type : " + ((Message)packet).getType());
+	        	log.info("id : " + meetPacket.getId());
+	        	log.info("action : " + meetPacket.getAction());
+	        	log.info("status : " + meetPacket.getStatus());
+	        	log.info("description : " + meetPacket.getDescription());
+	        	log.info("position : " + meetPacket.getPosition());
+	        	log.info("time : " + meetPacket.getTime());
+	        	log.info(".....................");
+	        }
+		}
     }
 }

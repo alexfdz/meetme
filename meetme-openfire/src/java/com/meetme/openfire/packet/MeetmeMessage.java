@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.PacketExtension;
 import org.xmpp.util.XMPPConstants;
 
+import com.meetme.openfire.vo.Status;
+
 /**
  * Represents a message that could be use for create/modify a meeting.
  * <p/>
@@ -160,6 +162,7 @@ public class MeetmeMessage extends PacketExtension{
     		element.remove(element.element(MeetmeMessage.ID_ATTRIBUTE));
     	}
         element.addElement(MeetmeMessage.ID_ATTRIBUTE, id);
+        //SequenceManager.nextID(this);
       //message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
     }
     
