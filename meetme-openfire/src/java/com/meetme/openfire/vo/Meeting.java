@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
@@ -20,6 +21,8 @@ import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.meetme.openfire.handler.IQCreateMeetHandler;
+import com.meetme.openfire.packet.MeetmeMessage;
 import com.meetme.openfire.util.Constants;
 
 /**
@@ -89,6 +92,27 @@ public class Meeting {
 	 */
 	public Meeting() {
 		
+	}
+	
+	/**
+	 * Initializes de {@link Meeting} element with the contents of an {@link Element}
+	 * @see IQCreateMeetHandler
+	 */
+	public Meeting(Element element) {
+		this(MeetmeMessage.fromElement(element));
+	}
+	
+	/**
+	 * Initializes de {@link Meeting} element with the contents of an {@link MeetmeMessage}
+	 */
+	public Meeting(MeetmeMessage message){
+		this.id = message.getId();
+		this.description = message.getDescription();
+		this.position = message.getPosition();
+		this.status = message.getStatus();
+		if(message.getTime() != null){
+			this.time = new Date(message.getTime().getTime());
+		}
 	}
 	
 	/**

@@ -141,8 +141,13 @@ public class MeetmeMessage extends PacketExtension{
      *
      * @return the id.
      */
-    public String getId() {
-        return element.elementTextTrim(MeetmeMessage.ID_ATTRIBUTE);
+    public Long getId() {
+    	Long id = null;
+        String value = element.elementTextTrim(MeetmeMessage.ID_ATTRIBUTE);
+        if(value != null){
+        	id = Long.parseLong(value);
+        }
+        return id;
     }
     
     /**
@@ -266,6 +271,15 @@ public class MeetmeMessage extends PacketExtension{
     
     public MeetmeMessage createCopy() {
         return new MeetmeMessage(this.getElement().createCopy());
+    }
+    
+    /**
+     * Create a new {@link MeetmeMessage} instance form an {@link Element} contents
+     * @param element
+     * @return
+     */
+    public static MeetmeMessage fromElement(Element element){
+    	return new MeetmeMessage(element);
     }
     
 }

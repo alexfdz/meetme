@@ -67,10 +67,7 @@ public class IQCreateMeetHandler extends IQHandler implements ServerFeaturesProv
         }
         
 		//Creation of the new meeting
-        
-        //TODO: Aqui se debe crear el meeting, vendrá en el IQ los datos del meeting? O se crea despues en los mensajes de request
-        
-		Meeting meeting = new Meeting();
+		Meeting meeting = new Meeting(((IQ)packet).getChildElement());
 		meeting.setOwner(sender);
 		meeting.setStatus(Status.created);
 		try {
