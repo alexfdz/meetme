@@ -252,4 +252,12 @@ public class MeetingRequest {
 		this.status = status;
 	}
 
+	public Long getMeetingId() {
+		return meetingId;
+	}
+
+	public void setMeetingId(Long meetingId) {
+		this.meetingId = meetingId;
+	}
+
 }

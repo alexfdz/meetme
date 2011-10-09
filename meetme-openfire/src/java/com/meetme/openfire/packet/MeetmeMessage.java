@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.PacketExtension;
 import org.xmpp.util.XMPPConstants;
 
+import com.meetme.openfire.util.Constants;
 import com.meetme.openfire.vo.Status;
 
 /**
@@ -39,15 +40,6 @@ public class MeetmeMessage extends PacketExtension{
             FastDateFormat.getInstance(XMPPConstants.XMPP_DELAY_DATETIME_FORMAT,
             TimeZone.getTimeZone("UTC"));
     
-	/**
-     * Element name of the packet extension.
-     */
-    public static final String ELEMENT_NAME = "meet";
-
-    /**
-     * Namespace of the packet extension.
-     */
-    public static final String NAMESPACE = "meetme:meet";
     
     public static final String ACTION_ATTRIBUTE = "action";
     public static final String ID_ATTRIBUTE = "id";
@@ -59,7 +51,8 @@ public class MeetmeMessage extends PacketExtension{
 	public static void init(){
 		UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         // Register that MeetPacket uses the jabber:x:data namespace
-        registeredExtensions.put(QName.get(ELEMENT_NAME, NAMESPACE), MeetmeMessage.class);
+        registeredExtensions.put(QName.get(Constants.MEET_ELEMENT_NAME, 
+        		Constants.MEET_NAMESPACE), MeetmeMessage.class);
 	}
 	
 	 /**
@@ -114,7 +107,7 @@ public class MeetmeMessage extends PacketExtension{
 	}
     
     public MeetmeMessage(Action action) {
-        super(ELEMENT_NAME, NAMESPACE);
+        super(Constants.MEET_ELEMENT_NAME, Constants.MEET_NAMESPACE);
         // Set the type of the data form
         this.setAction(action);
     }

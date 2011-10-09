@@ -1,6 +1,17 @@
-<meet action="" id="">
-	<status></status>
-	<description></description>
-	<position></position>
-	<time></time>
-</meet>
+<message id="Xe1MV-9" to="israelcamara|gmail.com@meetme" from="alexfdz|gmail.com@meetme/Smack"
+	type="chat">
+	<thread>dd03q1</thread>
+	<meet xmlns="meetme:meet">
+		<id>234567890</id>
+		<position>51.521375, -0.063879</position>
+		<time>sfdhg</time>
+		<status />
+		<description>sfdhg</description>
+		<action>create</action>
+	</meet>
+</message>
+
+
+<iq id="V8Etv-2" type="get">
+  <query xmlns="jabber:iq:meetId"/>
+</iq>

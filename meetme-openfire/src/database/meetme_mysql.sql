@@ -8,7 +8,7 @@ CREATE TABLE ofMeeting (
    start_time     VARCHAR(255),
    status    INTEGER     NOT NULL,
    PRIMARY KEY (id),
-   FOREIGN KEY (requested_user) REFERENCES ofUser(username)
+   FOREIGN KEY (owner) REFERENCES ofUser(username)
 );
 
 CREATE TABLE ofMeetingRequest (

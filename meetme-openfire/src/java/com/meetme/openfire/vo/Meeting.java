@@ -8,12 +8,12 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.NotFoundException;
@@ -31,7 +31,6 @@ import com.meetme.openfire.util.Constants;
 @JiveID(Constants.MEET_JID)
 public class Meeting {
 	
-	//TODO: Cargar la lista de requests sólo si se necesita
 	
 	//TODO: Pensar en el calculo dinamico del estado del meeting
 	
@@ -48,15 +47,18 @@ public class Meeting {
                     " FROM ofMeeting WHERE id=?";
     private static final String DELETE =
             "DELETE from ofMeeting WHERE id=?";
+    private static final String LOAD_REQUESTS =
+            "SELECT id, requested_user, status" +
+                    " FROM ofMeetingRequest WHERE meet_id=?";
     
 	/**
 	 * Unique id of the meeting
 	 */
 	private Long id;
 	/**
-	 * User owner of the meeting
+	 * Username owner of the meeting
 	 */
-	private User owner;
+	private String owner;
 	
 	/**
 	 * Description field of the meeting
@@ -111,7 +113,7 @@ public class Meeting {
             con = DbConnectionManager.getTransactionConnection();
             PreparedStatement pstmt = con.prepareStatement(INSERT);
             pstmt.setLong(1, id);
-            pstmt.setString(2, owner.getUsername());
+            pstmt.setString(2, owner);
             pstmt.setString(3, description);
             pstmt.setString(4, position);
             pstmt.setDate(5, time);
@@ -146,11 +148,52 @@ public class Meeting {
             if (!rs.next()) {
                 throw new NotFoundException("Meeting not found: " + id);
             }
-            this.owner = UserManager.getInstance().getUser(rs.getString(1));
+            this.owner = rs.getString(1);
             this.description = rs.getString(2);
             this.position = rs.getString(3);
             this.time = rs.getDate(4);
             this.status = Status.fromInt(rs.getInt(5));
+            
+            rs.close();
+            pstmt.close();
+        }
+        catch (SQLException sqle) {
+            log.error(sqle.getMessage(), sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+    
+    /**
+     * Loads meeting requests from the database.
+     *
+     * @throws NotFoundException if the meeting could not be loaded.
+     */
+    public void loadRequests() throws NotFoundException, UserNotFoundException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+        	if(this.id == null){
+        		return;
+        	}
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_REQUESTS);
+            pstmt.setLong(1, id);
+            rs = pstmt.executeQuery();
+            
+            this.requests = new ArrayList<MeetingRequest>();
+            MeetingRequest request = null;
+            while(rs.next()){
+            	request = new MeetingRequest();
+            	request.setId(rs.getLong(1));
+            	request.setUser(UserManager.getInstance().getUser(rs.getString(2)));
+                request.setStatus(Status.fromInt(rs.getInt(3)));
+                request.setMeeting(this);
+                request.setMeetingId(this.id);
+                this.requests.add(request);
+            }
             
             rs.close();
             pstmt.close();
@@ -172,7 +215,7 @@ public class Meeting {
         try {
             con = DbConnectionManager.getTransactionConnection();
             PreparedStatement pstmt = con.prepareStatement(UPDATE);
-            pstmt.setString(1, owner.getUsername());
+            pstmt.setString(1, owner);
             pstmt.setString(2, description);
             pstmt.setString(3, position);
             pstmt.setDate(4, time);
@@ -220,11 +263,11 @@ public class Meeting {
 		this.id = id;
 	}
 
-	public User getOwner() {
+	public String getOwner() {
 		return owner;
 	}
 
-	public void setOwner(User owner) {
+	public void setOwner(String owner) {
 		this.owner = owner;
 	}
 
@@ -261,6 +304,15 @@ public class Meeting {
 	}
 
 	public List<MeetingRequest> getRequests() {
+		if(requests == null){
+			try {
+				this.loadRequests();
+			} catch (NotFoundException e) {
+				log.error(e.getMessage(), e);
+			} catch (UserNotFoundException e) {
+				log.error(e.getMessage(), e);
+			}
+		}
 		return requests;
 	}
 
