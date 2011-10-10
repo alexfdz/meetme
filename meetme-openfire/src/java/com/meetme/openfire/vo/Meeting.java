@@ -15,7 +15,6 @@ import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
@@ -128,8 +127,10 @@ public class Meeting {
     
     /**
      * Inserts a new meeting into the database.
+     * @return the Id of the new instance
+     * @throws SQLException
      */
-    public void insert() throws SQLException {
+    public Long insert() throws SQLException {
         this.id = SequenceManager.nextID(this);
         Connection con = null;
         boolean abortTransaction = false;
@@ -153,6 +154,7 @@ public class Meeting {
         finally {
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
+        return this.id;
     }
     
     /**
@@ -212,7 +214,7 @@ public class Meeting {
             while(rs.next()){
             	request = new MeetingRequest();
             	request.setId(rs.getLong(1));
-            	request.setUser(UserManager.getInstance().getUser(rs.getString(2)));
+            	request.setUser(rs.getString(2));
                 request.setStatus(Status.fromInt(rs.getInt(3)));
                 request.setMeeting(this);
                 request.setMeetingId(this.id);

@@ -16,7 +16,7 @@ public enum Action {
 	unknow(-1),
 
 	/**
-	 * User try to create a new meeting
+	 * User try to create a new meeting request
 	 */
 	create(1),
 

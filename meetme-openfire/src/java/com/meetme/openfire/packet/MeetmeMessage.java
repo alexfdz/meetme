@@ -43,6 +43,7 @@ public class MeetmeMessage extends PacketExtension{
     
     public static final String ACTION_ATTRIBUTE = "action";
     public static final String ID_ATTRIBUTE = "id";
+    public static final String MEET_ID_ATTRIBUTE = "meetId";
     public static final String DESCRIPTON_ELEMENT = "description";
     public static final String POSITION_ELEMENT = "position";
     public static final String TIME_ELEMENT = "time";
@@ -133,7 +134,7 @@ public class MeetmeMessage extends PacketExtension{
         if(element.element(MeetmeMessage.ACTION_ATTRIBUTE) != null){
     		element.remove(element.element(MeetmeMessage.ACTION_ATTRIBUTE));
     	}
-        element.addElement(MeetmeMessage.ACTION_ATTRIBUTE, action==null?null:action.toString());
+        element.addElement(MeetmeMessage.ACTION_ATTRIBUTE).setText(action==null?null:action.getCode().toString());
     }
     
     /**
@@ -159,9 +160,33 @@ public class MeetmeMessage extends PacketExtension{
     	if(element.element(MeetmeMessage.ID_ATTRIBUTE) != null){
     		element.remove(element.element(MeetmeMessage.ID_ATTRIBUTE));
     	}
-        element.addElement(MeetmeMessage.ID_ATTRIBUTE, id);
-        //SequenceManager.nextID(this);
-      //message.setID(node.getNodeID() + "__" + recipientJID.toBareJID() + "__" + StringUtils.randomString(5));
+        element.addElement(MeetmeMessage.ID_ATTRIBUTE).setText(id);
+    }
+    
+    /**
+     * Returns the meeting id of this meet message.
+     *
+     * @return the meeting id.
+     */
+    public Long getMeetId() {
+    	Long id = null;
+        String value = element.elementTextTrim(MeetmeMessage.MEET_ID_ATTRIBUTE);
+        if(value != null){
+        	id = Long.parseLong(value);
+        }
+        return id;
+    }
+    
+    /**
+     * Sets the meeting id of this message.
+     *
+     * @param the meeting id.
+     */
+    public void setMeetId(String meetId) {
+    	if(element.element(MeetmeMessage.MEET_ID_ATTRIBUTE) != null){
+    		element.remove(element.element(MeetmeMessage.MEET_ID_ATTRIBUTE));
+    	}
+        element.addElement(MeetmeMessage.MEET_ID_ATTRIBUTE).setText(meetId);
     }
     
     /**

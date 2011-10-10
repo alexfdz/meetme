@@ -12,6 +12,34 @@
 </message>
 
 
+
+<message id="4PhG9-8" to="israelcamara|gmail.com@meetme" from="alexfdz|gmail.com@meetme/Smack" type="chat">
+  <thread>OV3L40</thread>
+  <meet xmlns="meetme:meet">
+    <id>234567890</id>
+    <position>51.521375, -0.063879</position>
+    <time>asdfghj</time>
+    <status/>
+    <description>asdfghj</description>
+    <action>create</action>
+  </meet>
+</message>
+
+
+<message id="Xe1MV-9" to="israelcamara|gmail.com@meetme" from="alexfdz|gmail.com@meetme/Smack"
+        type="chat">
+        <meet xmlns="meetme:meet">
+                <id></id> <!-- Id of the meeting request -->
+                <meetId>12</meetId> <!-- Id of the meeting -->
+                <action>1</action> <!-- Action id (1=create) -->
+                <!-- info of the meeting -->
+                <position>51.521375, -0.063879</position>
+                <time>20111009T23:11:56</time>
+                <description>Descripción del evento</description>
+        </meet>
+</message>
+
+
 <iq id="V8Etv-2" type="get">
   <query xmlns="jabber:iq:meetId">
 		<position>51.521375, -0.063879</position>

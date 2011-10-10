@@ -11,8 +11,6 @@ import java.sql.SQLException;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
@@ -52,7 +50,7 @@ public class MeetingRequest {
 	/**
 	 * User requested
 	 */
-	private User user;
+	private String user;
 	
 	/**
 	 * The meeting
@@ -108,8 +106,9 @@ public class MeetingRequest {
     
     /**
      * Inserts a new meeting request into the database.
+     * @return the Id of the new instance
      */
-    public void insert() throws SQLException {
+    public Long insert() throws SQLException {
         this.id = SequenceManager.nextID(this);
         Connection con = null;
         boolean abortTransaction = false;
@@ -117,8 +116,8 @@ public class MeetingRequest {
             con = DbConnectionManager.getTransactionConnection();
             PreparedStatement pstmt = con.prepareStatement(INSERT);
             pstmt.setLong(1, id);
-            pstmt.setLong(2, meeting.getId());
-            pstmt.setString(3, user.getUsername());
+            pstmt.setLong(2, meetingId);
+            pstmt.setString(3, user);
             pstmt.setInt(4, status.getCode());
             pstmt.executeUpdate();
             pstmt.close();
@@ -130,6 +129,7 @@ public class MeetingRequest {
         finally {
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
+        return this.id;
     }
     
     /**
@@ -150,7 +150,7 @@ public class MeetingRequest {
                 throw new NotFoundException("Meeting not found: " + id);
             }
             this.meetingId = rs.getLong(1);
-            this.user = UserManager.getInstance().getUser(rs.getString(2));
+            this.user = rs.getString(2);
             this.status = Status.fromInt(rs.getInt(3));
             
             rs.close();
@@ -174,7 +174,7 @@ public class MeetingRequest {
             con = DbConnectionManager.getTransactionConnection();
             PreparedStatement pstmt = con.prepareStatement(UPDATE);
             pstmt.setLong(1, meeting.getId());
-            pstmt.setString(2, user.getUsername());
+            pstmt.setString(2, user);
             pstmt.setInt(3, status.getCode());
             pstmt.executeUpdate();
             pstmt.close();
@@ -219,11 +219,11 @@ public class MeetingRequest {
 		this.id = id;
 	}
 
-	public User getUser() {
+	public String getUser() {
 		return user;
 	}
 
-	public void setUser(User user) {
+	public void setUser(String user) {
 		this.user = user;
 	}
 
@@ -241,7 +241,10 @@ public class MeetingRequest {
 	}
 
 	public void setMeeting(Meeting meeting) {
-		this.meeting = meeting;
+		if(meeting != null){
+			this.meeting = meeting;
+			this.setMeetingId(meeting.getId());
+		}
 	}
 
 	public Status getStatus() {
