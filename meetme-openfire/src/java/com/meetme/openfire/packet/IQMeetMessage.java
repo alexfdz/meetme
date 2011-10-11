@@ -17,7 +17,6 @@ import org.xmpp.packet.PacketExtension;
 import org.xmpp.util.XMPPConstants;
 
 import com.meetme.openfire.util.Constants;
-import com.meetme.openfire.vo.Status;
 
 /**
  * Represents a message that could be use for create/modify a meeting.
@@ -30,9 +29,9 @@ import com.meetme.openfire.vo.Status;
  * @author alex
  *
  */
-public class MeetmeMessage extends PacketExtension{
+public class IQMeetMessage extends PacketExtension{
 	
-	private static final Logger log = LoggerFactory.getLogger(MeetmeMessage.class);
+	private static final Logger log = LoggerFactory.getLogger(IQMeetMessage.class);
 	
     private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(
             XMPPConstants.XMPP_DELAY_DATETIME_FORMAT);
@@ -41,19 +40,27 @@ public class MeetmeMessage extends PacketExtension{
             TimeZone.getTimeZone("UTC"));
     
     
-    public static final String ACTION_ATTRIBUTE = "action";
     public static final String ID_ATTRIBUTE = "id";
-    public static final String MEET_ID_ATTRIBUTE = "meetId";
     public static final String DESCRIPTON_ELEMENT = "description";
     public static final String POSITION_ELEMENT = "position";
     public static final String TIME_ELEMENT = "time";
-    public static final String STATUS_ELEMENT = "status";
+    public static final String ACCEPTED_ELEMENT = "accepted";
+    public static final String DENIED_ELEMENT = "denied";
+    public static final String UNKNOW_ELEMENT = "unknow";
     
 	public static void init(){
 		UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         // Register that MeetPacket uses the jabber:x:data namespace
         registeredExtensions.put(QName.get(Constants.MEET_ELEMENT_NAME, 
-        		Constants.MEET_NAMESPACE), MeetmeMessage.class);
+        		Constants.MEET_NAMESPACE), IQMeetMessage.class);
+	}
+	
+	public IQMeetMessage(Element element) {
+		super(element);
+	}
+
+	public IQMeetMessage() {
+		super(Constants.MEET_ELEMENT_NAME, Constants.MEET_NAMESPACE);
 	}
 	
 	 /**
@@ -103,40 +110,6 @@ public class MeetmeMessage extends PacketExtension{
         }
     }
 
-    public MeetmeMessage(Element element) {
-		super(element);
-	}
-    
-    public MeetmeMessage(Action action) {
-        super(Constants.MEET_ELEMENT_NAME, Constants.MEET_NAMESPACE);
-        // Set the type of the data form
-        this.setAction(action);
-    }
-    
-    /**
-     * Returns the action of this meet message.
-     *
-     * @return the message action.
-     * @see MeetmeMessage.Action
-     */
-    public Action getAction() {
-        String action = element.elementTextTrim(MeetmeMessage.ACTION_ATTRIBUTE);
-        return Action.fromString(action);
-    }
-    
-    /**
-     * Sets the action of this message.
-     *
-     * @param action the message type.
-     * @see Action
-     */
-    public void setAction(Action action) {
-        if(element.element(MeetmeMessage.ACTION_ATTRIBUTE) != null){
-    		element.remove(element.element(MeetmeMessage.ACTION_ATTRIBUTE));
-    	}
-        element.addElement(MeetmeMessage.ACTION_ATTRIBUTE).setText(action==null?null:action.getCode().toString());
-    }
-    
     /**
      * Returns the id of this meet message.
      *
@@ -144,7 +117,7 @@ public class MeetmeMessage extends PacketExtension{
      */
     public Long getId() {
     	Long id = null;
-        String value = element.elementTextTrim(MeetmeMessage.ID_ATTRIBUTE);
+        String value = element.elementTextTrim(IQMeetMessage.ID_ATTRIBUTE);
         if(value != null){
         	id = Long.parseLong(value);
         }
@@ -157,36 +130,12 @@ public class MeetmeMessage extends PacketExtension{
      * @param the message id.
      */
     public void setId(String id) {
-    	if(element.element(MeetmeMessage.ID_ATTRIBUTE) != null){
-    		element.remove(element.element(MeetmeMessage.ID_ATTRIBUTE));
+    	if(element.element(IQMeetMessage.ID_ATTRIBUTE) != null){
+    		element.remove(element.element(IQMeetMessage.ID_ATTRIBUTE));
     	}
-        element.addElement(MeetmeMessage.ID_ATTRIBUTE).setText(id);
-    }
-    
-    /**
-     * Returns the meeting id of this meet message.
-     *
-     * @return the meeting id.
-     */
-    public Long getMeetId() {
-    	Long id = null;
-        String value = element.elementTextTrim(MeetmeMessage.MEET_ID_ATTRIBUTE);
-        if(value != null){
-        	id = Long.parseLong(value);
+        if(id != null){
+        	element.addElement(IQMeetMessage.ID_ATTRIBUTE).setText(id);
         }
-        return id;
-    }
-    
-    /**
-     * Sets the meeting id of this message.
-     *
-     * @param the meeting id.
-     */
-    public void setMeetId(String meetId) {
-    	if(element.element(MeetmeMessage.MEET_ID_ATTRIBUTE) != null){
-    		element.remove(element.element(MeetmeMessage.MEET_ID_ATTRIBUTE));
-    	}
-        element.addElement(MeetmeMessage.MEET_ID_ATTRIBUTE).setText(meetId);
     }
     
     /**
@@ -196,10 +145,12 @@ public class MeetmeMessage extends PacketExtension{
      */
     public void setDescription(String description) {
         // Remove an existing description element.
-        if (element.element(MeetmeMessage.DESCRIPTON_ELEMENT) != null) {
-            element.remove(element.element(MeetmeMessage.DESCRIPTON_ELEMENT));
+        if (element.element(IQMeetMessage.DESCRIPTON_ELEMENT) != null) {
+            element.remove(element.element(IQMeetMessage.DESCRIPTON_ELEMENT));
         }
-        element.addElement(MeetmeMessage.DESCRIPTON_ELEMENT).setText(description);
+        if(description != null){
+        	element.addElement(IQMeetMessage.DESCRIPTON_ELEMENT).setText(description);
+        }
     }
     
     /**
@@ -208,7 +159,7 @@ public class MeetmeMessage extends PacketExtension{
      * @return description of the message.
      */
     public String getDescription() {
-        return element.elementTextTrim(MeetmeMessage.DESCRIPTON_ELEMENT);
+        return element.elementTextTrim(IQMeetMessage.DESCRIPTON_ELEMENT);
     }
     
     /**
@@ -218,10 +169,12 @@ public class MeetmeMessage extends PacketExtension{
      */
     public void setPosition(String position) {
         // Remove an existing description element.
-        if (element.element(MeetmeMessage.POSITION_ELEMENT) != null) {
-            element.remove(element.element(MeetmeMessage.POSITION_ELEMENT));
+        if (element.element(IQMeetMessage.POSITION_ELEMENT) != null) {
+            element.remove(element.element(IQMeetMessage.POSITION_ELEMENT));
         }
-        element.addElement(MeetmeMessage.POSITION_ELEMENT).setText(position);
+        if(position != null){
+        	element.addElement(IQMeetMessage.POSITION_ELEMENT).setText(position);
+        }
     }
     
     /**
@@ -230,30 +183,7 @@ public class MeetmeMessage extends PacketExtension{
      * @return position of the message.
      */
     public String getPosition() {
-        return element.elementTextTrim(MeetmeMessage.POSITION_ELEMENT);
-    }
-    
-    /**
-     * Returns the status of the meet.
-     *
-     * @return position of the message.
-     */
-    public Status getStatus() {
-        String status = element.elementTextTrim(MeetmeMessage.STATUS_ELEMENT);
-        return Status.fromString(status);
-    }
-    
-    /**
-     * Sets the status of the meet.
-     *
-     * @param status of the message.
-     */
-    public void setStatus(Status status) {
-        // Remove an existing description element.
-        if (element.element(MeetmeMessage.STATUS_ELEMENT) != null) {
-            element.remove(element.element(MeetmeMessage.STATUS_ELEMENT));
-        }
-        element.addElement(MeetmeMessage.STATUS_ELEMENT).setText(status==null?null:status.toString());
+        return element.elementTextTrim(IQMeetMessage.POSITION_ELEMENT);
     }
     
     /**
@@ -262,11 +192,11 @@ public class MeetmeMessage extends PacketExtension{
      * @return time of the meet.
      */
     public Date getTime() {
-        String time = element.elementTextTrim(MeetmeMessage.TIME_ELEMENT);
+        String time = element.elementTextTrim(IQMeetMessage.TIME_ELEMENT);
         Date result = null;
         if (time != null) {
         	try {
-				result = MeetmeMessage.parseDate(time);
+				result = IQMeetMessage.parseDate(time);
 			} catch (ParseException e) {
 				log.error("Error parsing meetme message date", e);
 			}
@@ -282,29 +212,117 @@ public class MeetmeMessage extends PacketExtension{
     public void setTime(Date time) {
         // Remove an existing description element.
     	String value = null;
-        if (element.element(MeetmeMessage.TIME_ELEMENT) != null) {
-            element.remove(element.element(MeetmeMessage.TIME_ELEMENT));
+        if (element.element(IQMeetMessage.TIME_ELEMENT) != null) {
+            element.remove(element.element(IQMeetMessage.TIME_ELEMENT));
         }
-        try {
-			value = MeetmeMessage.formatDate(time);
-		} catch (ParseException e) {
-			log.error("Error formatting meetme message date", e);
-		}
-        element.addElement(MeetmeMessage.TIME_ELEMENT).setText(value);
-    }
-    
-    
-    public MeetmeMessage createCopy() {
-        return new MeetmeMessage(this.getElement().createCopy());
+        if(time != null){
+        	 try {
+     			value = IQMeetMessage.formatDate(time);
+     		} catch (ParseException e) {
+     			log.error("Error formatting meetme message date", e);
+     		}
+             if(value != null){
+             	element.addElement(IQMeetMessage.TIME_ELEMENT).setText(value);
+             }
+        }
     }
     
     /**
-     * Create a new {@link MeetmeMessage} instance form an {@link Element} contents
+     * Returns the accepted requests of this meet message.
+     *
+     * @return the accepted requests.
+     */
+    public Integer getAccepted() {
+    	Integer count = null;
+        String value = element.elementTextTrim(IQMeetMessage.ACCEPTED_ELEMENT);
+        if(value != null){
+        	count = Integer.parseInt(value);
+        }
+        return count;
+    }
+    
+    /**
+     * Sets the accepted requests of this message.
+     *
+     * @param the message accepted requests.
+     */
+    public void setAccepted(Integer count) {
+    	if(element.element(IQMeetMessage.ACCEPTED_ELEMENT) != null){
+    		element.remove(element.element(IQMeetMessage.ACCEPTED_ELEMENT));
+    	}
+        if(count != null){
+        	element.addElement(IQMeetMessage.ACCEPTED_ELEMENT).setText(count.toString());
+        }
+    }
+    
+    /**
+     * Returns the denied requests of this meet message.
+     *
+     * @return the denied requests.
+     */
+    public Integer getDenied() {
+    	Integer count = null;
+        String value = element.elementTextTrim(IQMeetMessage.DENIED_ELEMENT);
+        if(value != null){
+        	count = Integer.parseInt(value);
+        }
+        return count;
+    }
+    
+    /**
+     * Sets the denied requests of this message.
+     *
+     * @param the message denied requests.
+     */
+    public void setDenied(Integer count) {
+    	if(element.element(IQMeetMessage.DENIED_ELEMENT) != null){
+    		element.remove(element.element(IQMeetMessage.DENIED_ELEMENT));
+    	}
+        if(count != null){
+        	element.addElement(IQMeetMessage.DENIED_ELEMENT).setText(count.toString());
+        }
+    }
+    
+    /**
+     * Returns the unknow requests of this meet message.
+     *
+     * @return the unknow requests.
+     */
+    public Integer getUnknow() {
+    	Integer count = null;
+        String value = element.elementTextTrim(IQMeetMessage.UNKNOW_ELEMENT);
+        if(value != null){
+        	count = Integer.parseInt(value);
+        }
+        return count;
+    }
+    
+    /**
+     * Sets the unknow requests of this message.
+     *
+     * @param the message unknow requests.
+     */
+    public void setUnknow(Integer count) {
+    	if(element.element(IQMeetMessage.UNKNOW_ELEMENT) != null){
+    		element.remove(element.element(IQMeetMessage.UNKNOW_ELEMENT));
+    	}
+        if(count != null){
+        	element.addElement(IQMeetMessage.UNKNOW_ELEMENT).setText(count.toString());
+        }
+    }
+    
+    
+    public IQMeetMessage createCopy() {
+        return new IQMeetMessage(this.getElement().createCopy());
+    }
+    
+    /**
+     * Create a new {@link IQMeetMessage} instance form an {@link Element} contents
      * @param element
      * @return
      */
-    public static MeetmeMessage fromElement(Element element){
-    	return new MeetmeMessage(element);
+    public static IQMeetMessage fromElement(Element element){
+    	return new IQMeetMessage(element);
     }
     
 }

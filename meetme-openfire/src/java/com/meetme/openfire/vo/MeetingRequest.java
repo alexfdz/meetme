@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +64,7 @@ public class MeetingRequest {
 	/**
 	 * Status of the request
 	 */
-	private Status status;
+	private MeetingRequestStatus status;
 	
 	/**
 	 * 
@@ -79,10 +78,9 @@ public class MeetingRequest {
      *
      * @param id the meeting request ID.
      * @throws NotFoundException if the meeting request does not exist or could not be loaded.
-     * @throws UserNotFoundException if the meeting request user does 
      * not exist or could not be loaded.
      */
-    public MeetingRequest(long id) throws NotFoundException, UserNotFoundException {
+    public MeetingRequest(long id) throws NotFoundException, SQLException {
         this.id = id;
         load();
     }
@@ -94,11 +92,8 @@ public class MeetingRequest {
      * @param meeting
      * @throws NotFoundException if the meeting request does not exist or
      *  could not be loaded.
-     * @throws UserNotFoundException if the meeting request user does 
-     * not exist or could not be loaded.
      */
-    public MeetingRequest(long id, Meeting meeting) throws NotFoundException, 
-    	UserNotFoundException {
+    public MeetingRequest(long id, Meeting meeting) throws NotFoundException, SQLException {
         this.id = id;
         this.meeting = meeting;
         load();
@@ -129,6 +124,7 @@ public class MeetingRequest {
         finally {
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
+        log.debug("MeetingRequest created id:" + this.id);
         return this.id;
     }
     
@@ -137,7 +133,7 @@ public class MeetingRequest {
      *
      * @throws NotFoundException if the meeting request could not be loaded.
      */
-    public void load() throws NotFoundException, UserNotFoundException {
+    public void load() throws NotFoundException, SQLException {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -151,13 +147,14 @@ public class MeetingRequest {
             }
             this.meetingId = rs.getLong(1);
             this.user = rs.getString(2);
-            this.status = Status.fromInt(rs.getInt(3));
+            this.status = MeetingRequestStatus.fromInt(rs.getInt(3));
             
             rs.close();
             pstmt.close();
         }
         catch (SQLException sqle) {
             log.error(sqle.getMessage(), sqle);
+            throw sqle;
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -167,7 +164,7 @@ public class MeetingRequest {
     /**
      * Saves a meeting to the database.
      */
-    public void update() {
+    public void update() throws SQLException{
         Connection con = null;
         boolean abortTransaction = false;
         try {
@@ -182,6 +179,7 @@ public class MeetingRequest {
         catch (SQLException sqle) {
             abortTransaction = true;
             log.error(sqle.getMessage(), sqle);
+            throw sqle;
         }
         finally {
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
@@ -204,6 +202,7 @@ public class MeetingRequest {
         }
         catch (SQLException sqle) {
             abortTransaction = true;
+            log.error(sqle.getMessage(), sqle);
             throw sqle;
         }
         finally {
@@ -233,8 +232,6 @@ public class MeetingRequest {
 				this.meeting = new Meeting(this.meetingId);
 			} catch (NotFoundException e) {
 				log.error(e.getMessage(), e);
-			} catch (UserNotFoundException e) {
-				log.error(e.getMessage(), e);
 			}
         }
 		return meeting;
@@ -247,11 +244,11 @@ public class MeetingRequest {
 		}
 	}
 
-	public Status getStatus() {
+	public MeetingRequestStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(Status status) {
+	public void setStatus(MeetingRequestStatus status) {
 		this.status = status;
 	}
 

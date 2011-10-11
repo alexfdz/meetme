@@ -8,23 +8,23 @@ package com.meetme.openfire.vo;
  * 
  * @author alex
  */
-public enum Status {
+public enum MeetingRequestStatus {
     /**
      */
 	created(1),
     /**
      */
-    confirmed(2),
+	accepted(2),
     /**
      */
-    deleted(3),
+    denied(3),
     /**
      */
     unknow(-1);
     
     private Integer code;
 
-	private Status(int c) {
+	private MeetingRequestStatus(int c) {
 		code = c;
 	}
 
@@ -33,38 +33,38 @@ public enum Status {
 	}
 	
 	/**
-	 * Obtains the {@link Status} value of a string
+	 * Obtains the {@link MeetingRequestStatus} value of a string
 	 * representation
 	 * @param code
-	 * @return the resolved {@link Status} object
+	 * @return the resolved {@link MeetingRequestStatus} object
 	 */
-	public static Status fromString(String code) {
+	public static MeetingRequestStatus fromString(String code) {
 		Integer codeInt = null;
 		try {
 			codeInt = Integer.parseInt(code);
 		} catch (NumberFormatException e) {
 			return unknow;
 		}
-		return Status.fromInt(codeInt);
+		return MeetingRequestStatus.fromInt(codeInt);
 	}
 
 	/**
-	 * Obtains the {@link Status} value of an int
+	 * Obtains the {@link MeetingRequestStatus} value of an int
 	 * representation
 	 * @param code
-	 * @return the resolved {@link Status} object
+	 * @return the resolved {@link MeetingRequestStatus} object
 	 */
-	public static Status fromInt(Integer code) {
-		Status result = unknow;
+	public static MeetingRequestStatus fromInt(Integer code) {
+		MeetingRequestStatus result = unknow;
 		switch (code) {
 		case 1:
 			result = created;
 			break;
 		case 2:
-			result = confirmed;
+			result = accepted;
 			break;
 		case 3:
-			result = deleted;
+			result = denied;
 			break;
 		}
 		return result;

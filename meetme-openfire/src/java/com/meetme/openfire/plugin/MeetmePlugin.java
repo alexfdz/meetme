@@ -14,8 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meetme.openfire.handler.IQCreateMeetHandler;
+import com.meetme.openfire.handler.IQGetMeetsHandler;
 import com.meetme.openfire.interceptor.MessageInterceptor;
-import com.meetme.openfire.packet.MeetmeMessage;
+import com.meetme.openfire.packet.MeetmeRequestMessage;
 import com.meetme.openfire.util.Constants;
 
 /**
@@ -37,7 +38,13 @@ public class MeetmePlugin implements Plugin {
      * Implements the TYPE_IQ {@link Constants.IQ_MEET_ID_NAMESPACE} protocol. Allows users to create
      * a new meeting instance and obtains its ID
      */
-    private IQCreateMeetHandler iqMeetHandler;
+    private IQCreateMeetHandler iqCreateMeetHandler;
+    
+    /**
+     * Implements the TYPE_IQ {@link Constants.IQ_GET_MEETS_NAMESPACE} protocol. Allows users to create
+     * a new meeting instance and obtains its ID
+     */
+    private IQGetMeetsHandler iqGetMeetsHandler;
     
     public MeetmePlugin() {
     }
@@ -59,15 +66,18 @@ public class MeetmePlugin implements Plugin {
         //JiveGlobals.setProperty("provider.user.className", "com.meetme.openfire.user.UserProvider");
 		
         //Create Meetme message extension
-        MeetmeMessage.init();
+        MeetmeRequestMessage.init();
         
         //Init IQ messages handlers
         XMPPServer server = XMPPServer.getInstance();
-        // Register the iqMeetHandler features in disco.
+        // Register the IQs features in disco.
         server.getIQDiscoInfoHandler().addServerFeature(Constants.IQ_MEET_ID_NAMESPACE);
-        // Add an IQ handler.
-        iqMeetHandler = new IQCreateMeetHandler();
-        server.getIQRouter().addHandler(iqMeetHandler);
+        server.getIQDiscoInfoHandler().addServerFeature(Constants.IQ_GET_MEETS_NAMESPACE);
+        // Add IQs handlers.
+        iqCreateMeetHandler = new IQCreateMeetHandler();
+        iqGetMeetsHandler = new IQGetMeetsHandler();
+        server.getIQRouter().addHandler(iqCreateMeetHandler);
+        server.getIQRouter().addHandler(iqGetMeetsHandler);
 	}
 
 	/* (non-Javadoc)
@@ -82,10 +92,13 @@ public class MeetmePlugin implements Plugin {
         // Remove the iqMeetHandler features in disco.
         XMPPServer server = XMPPServer.getInstance();
         server.getIQDiscoInfoHandler().removeServerFeature(Constants.IQ_MEET_ID_NAMESPACE);
-        if (iqMeetHandler != null) {
-            server.getIQRouter().removeHandler(iqMeetHandler);
-            iqMeetHandler = null;
-        }
+        server.getIQDiscoInfoHandler().removeServerFeature(Constants.IQ_GET_MEETS_NAMESPACE);
+        
+        server.getIQRouter().removeHandler(iqCreateMeetHandler);
+        server.getIQRouter().removeHandler(iqGetMeetsHandler);
+        
+        iqCreateMeetHandler = null;
+        iqGetMeetsHandler = null;
 	}
 	
 	public static PluginManager getPluginManager() {

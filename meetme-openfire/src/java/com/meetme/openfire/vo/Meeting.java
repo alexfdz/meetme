@@ -15,13 +15,12 @@ import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meetme.openfire.handler.IQCreateMeetHandler;
-import com.meetme.openfire.packet.MeetmeMessage;
+import com.meetme.openfire.packet.MeetmeRequestMessage;
 import com.meetme.openfire.util.Constants;
 
 /**
@@ -34,19 +33,21 @@ import com.meetme.openfire.util.Constants;
 public class Meeting {
 	
 	
-	//TODO: Pensar en el calculo dinamico del estado del meeting
+	//TODO: Faltara un estado para indicar cuando se quiere realizar un borrado logico del meeting
 	
 	private static final Logger log = LoggerFactory.getLogger(Meeting.class);
 	
 	private static final String INSERT =
             "INSERT INTO ofMeeting(id, owner, description, position, " +
-                    "start_time, status) VALUES (?,?,?,?,?,?)";
+                    "start_time) VALUES (?,?,?,?,?,?)";
 	private static final String UPDATE =
-            "UPDATE ofMeeting SET owner=?, description=?, position=?, start_time=?, " +
-                    "status=? WHERE id=?";
+            "UPDATE ofMeeting SET owner=?, description=?, position=?, start_time=? WHERE id=?";
     private static final String LOAD =
-            "SELECT owner, description, position, start_time, status" +
+            "SELECT owner, description, position, start_time" +
                     " FROM ofMeeting WHERE id=?";
+    private static final String FIND_BY_USER =
+            "SELECT id, description, position, start_time" +
+                    " FROM ofMeeting WHERE owner=?";
     private static final String DELETE =
             "DELETE from ofMeeting WHERE id=?";
     private static final String LOAD_REQUESTS =
@@ -77,11 +78,6 @@ public class Meeting {
 	private Date time;
 	
 	/**
-	 * The status of the meeting. Calculated with the status of the meeting queries
-	 */
-	private Status status;
-	
-	/**
 	 * The meeting requests between the owner and requested users.
 	 */
 	private List<MeetingRequest> requests;
@@ -98,17 +94,16 @@ public class Meeting {
 	 * @see IQCreateMeetHandler
 	 */
 	public Meeting(Element element) {
-		this(MeetmeMessage.fromElement(element));
+		this(MeetmeRequestMessage.fromElement(element));
 	}
 	
 	/**
-	 * Initializes de {@link Meeting} element with the contents of an {@link MeetmeMessage}
+	 * Initializes de {@link Meeting} element with the contents of an {@link MeetmeRequestMessage}
 	 */
-	public Meeting(MeetmeMessage message){
+	public Meeting(MeetmeRequestMessage message){
 		this.id = message.getId();
 		this.description = message.getDescription();
 		this.position = message.getPosition();
-		this.status = message.getStatus();
 		if(message.getTime() != null){
 			this.time = new Date(message.getTime().getTime());
 		}
@@ -120,7 +115,7 @@ public class Meeting {
      * @param id the meeting ID.
      * @throws NotFoundException if the meeting does not exist or could not be loaded.
      */
-    public Meeting(Long id) throws NotFoundException, UserNotFoundException {
+    public Meeting(Long id) throws NotFoundException {
         this.id = id;
         load();
     }
@@ -142,7 +137,6 @@ public class Meeting {
             pstmt.setString(3, description);
             pstmt.setString(4, position);
             pstmt.setDate(5, time);
-            pstmt.setInt(6, status.getCode());
             
             pstmt.executeUpdate();
             pstmt.close();
@@ -154,6 +148,7 @@ public class Meeting {
         finally {
             DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
+        log.debug("Meeting created id:" + this.id);
         return this.id;
     }
     
@@ -162,7 +157,7 @@ public class Meeting {
      *
      * @throws NotFoundException if the meeting could not be loaded.
      */
-    public void load() throws NotFoundException, UserNotFoundException {
+    public void load() throws NotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -178,7 +173,6 @@ public class Meeting {
             this.description = rs.getString(2);
             this.position = rs.getString(3);
             this.time = rs.getDate(4);
-            this.status = Status.fromInt(rs.getInt(5));
             
             rs.close();
             pstmt.close();
@@ -196,7 +190,7 @@ public class Meeting {
      *
      * @throws NotFoundException if the meeting could not be loaded.
      */
-    public void loadRequests() throws NotFoundException, UserNotFoundException {
+    public void loadRequests() throws NotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -215,7 +209,7 @@ public class Meeting {
             	request = new MeetingRequest();
             	request.setId(rs.getLong(1));
             	request.setUser(rs.getString(2));
-                request.setStatus(Status.fromInt(rs.getInt(3)));
+                request.setStatus(MeetingRequestStatus.fromInt(rs.getInt(3)));
                 request.setMeeting(this);
                 request.setMeetingId(this.id);
                 this.requests.add(request);
@@ -245,7 +239,6 @@ public class Meeting {
             pstmt.setString(2, description);
             pstmt.setString(3, position);
             pstmt.setDate(4, time);
-            pstmt.setInt(5, status.getCode());
             pstmt.executeUpdate();
             pstmt.close();
         }
@@ -321,21 +314,11 @@ public class Meeting {
 		this.time = time;
 	}
 
-	public Status getStatus() {
-		return status;
-	}
-
-	public void setStatus(Status status) {
-		this.status = status;
-	}
-
 	public List<MeetingRequest> getRequests() {
 		if(requests == null){
 			try {
 				this.loadRequests();
 			} catch (NotFoundException e) {
-				log.error(e.getMessage(), e);
-			} catch (UserNotFoundException e) {
 				log.error(e.getMessage(), e);
 			}
 		}
@@ -345,6 +328,44 @@ public class Meeting {
 	public void setRequests(List<MeetingRequest> requests) {
 		this.requests = requests;
 	}
+	
+	/**
+     * Loads a meeting from the database.
+     *
+     * @throws NotFoundException if the meeting could not be loaded.
+     */
+    public static List<Meeting> findByUser(String username) throws NotFoundException {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<Meeting> meetings = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(FIND_BY_USER);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+            meetings = new ArrayList<Meeting>();
+            Meeting meeting = null;
+            while(rs.next()){
+            	meeting = new Meeting();
+            	meeting.setId(rs.getLong(1));
+            	meeting.setOwner(username);
+            	meeting.setDescription(rs.getString(2));
+            	meeting.setPosition(rs.getString(3));
+            	meeting.setTime(rs.getDate(4));
+                meetings.add(meeting);
+            }
+            rs.close();
+            pstmt.close();
+        }
+        catch (SQLException sqle) {
+            log.error(sqle.getMessage(), sqle);
+        }
+        finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return meetings;
+    }
 	
 
 }

@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.util.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Message;
@@ -15,10 +16,10 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
 import com.meetme.openfire.packet.Action;
-import com.meetme.openfire.packet.MeetmeMessage;
+import com.meetme.openfire.packet.MeetmeRequestMessage;
 import com.meetme.openfire.util.Constants;
 import com.meetme.openfire.vo.MeetingRequest;
-import com.meetme.openfire.vo.Status;
+import com.meetme.openfire.vo.MeetingRequestStatus;
 
 /**
  * Packet interceptor that process meeting request messages. 
@@ -38,8 +39,8 @@ public class MessageInterceptor implements PacketInterceptor {
         }
 		if(packet instanceof Message){
 			PacketExtension extension = packet.getExtension(Constants.MEET_ELEMENT_NAME, Constants.MEET_NAMESPACE);
-	        if (extension instanceof MeetmeMessage) {
-	        	MeetmeMessage message = (MeetmeMessage) extension;
+	        if (extension instanceof MeetmeRequestMessage) {
+	        	MeetmeRequestMessage message = (MeetmeRequestMessage) extension;
 	        	
 	        	Action action = message.getAction();
 	        	
@@ -77,7 +78,7 @@ public class MessageInterceptor implements PacketInterceptor {
 	 * @param message
 	 * @throws PacketRejectedException
 	 */
-	private void interceptCreateMessage(Packet packet, MeetmeMessage message) throws PacketRejectedException {
+	private void interceptCreateMessage(Packet packet, MeetmeRequestMessage message) throws PacketRejectedException {
 		if(packet.getTo() == null || packet.getTo().getNode() == null){
 			throw new PacketRejectedException("To is null");
 		}
@@ -90,7 +91,7 @@ public class MessageInterceptor implements PacketInterceptor {
 		MeetingRequest request = new MeetingRequest();
 		request.setMeetingId(meetId);
 		request.setUser(user);
-		request.setStatus(Status.created);
+		request.setStatus(MeetingRequestStatus.created);
 		
 		//Save it in db to get the meeting request Id
 		Long id = null;
@@ -112,30 +113,82 @@ public class MessageInterceptor implements PacketInterceptor {
 	/**
 	 * @param message
 	 */
-	private void interceptRequestMessage(MeetmeMessage message) throws PacketRejectedException {
+	private void interceptRequestMessage(MeetmeRequestMessage message) throws PacketRejectedException {
 		//TODO Para que sirve????
 	}
 	
 	/**
+	 * Intercepts a deny confirmation of a {@link MeetingRequest}.
+	 * Updates the content in database instance and forwards the message to the user
 	 * @param message
 	 */
-	private void interceptDenyMessage(MeetmeMessage message) throws PacketRejectedException {
-		//TODO
-//		Modificar el estado de la request en la bd (que hacemos con el estado del meeting)
+	private void interceptDenyMessage(MeetmeRequestMessage message) throws PacketRejectedException {
+		if(message.getId() == null){
+			throw new PacketRejectedException("Request id is null");
+		}
+		
+		Long requestId = message.getId();
+		MeetingRequest request = null;
+		
+		try {
+			request = new MeetingRequest(requestId);
+		} catch (NotFoundException e) {
+			log.error("Meeting request not found", e);
+			throw new PacketRejectedException(e);
+		} catch (SQLException e){
+			log.error(e.getMessage(), e);
+			throw new PacketRejectedException(e);
+		}
+		
+		request.setStatus(MeetingRequestStatus.denied);
+		message.setStatus(MeetingRequestStatus.denied);
+		
+		try {
+			request.update();
+		} catch (SQLException e){
+			log.error(e.getMessage(), e);
+			throw new PacketRejectedException(e);
+		}
+	}
+	
+	/**
+	 * Intercepts an accept confirmation of a {@link MeetingRequest}.
+	 * Updates the content in database instance and forwards the message to the user
+	 * @param message
+	 */
+	private void interceptAcceptMessage(MeetmeRequestMessage message) throws PacketRejectedException {
+		if(message.getId() == null){
+			throw new PacketRejectedException("Request id is null");
+		}
+		
+		Long requestId = message.getId();
+		MeetingRequest request = null;
+		
+		try {
+			request = new MeetingRequest(requestId);
+		} catch (NotFoundException e) {
+			log.error("Meeting request not found", e);
+			throw new PacketRejectedException(e);
+		} catch (SQLException e){
+			log.error(e.getMessage(), e);
+			throw new PacketRejectedException(e);
+		}
+		
+		request.setStatus(MeetingRequestStatus.accepted);
+		message.setStatus(MeetingRequestStatus.accepted);
+		
+		try {
+			request.update();
+		} catch (SQLException e){
+			log.error(e.getMessage(), e);
+			throw new PacketRejectedException(e);
+		}
 	}
 	
 	/**
 	 * @param message
 	 */
-	private void interceptAcceptMessage(MeetmeMessage message) throws PacketRejectedException {
-		//TODO
-//		Modificar el estado de la request en la bd (que hacemos con el estado del meeting)
-	}
-	
-	/**
-	 * @param message
-	 */
-	private void interceptModifyMessage(MeetmeMessage message) throws PacketRejectedException {
+	private void interceptModifyMessage(MeetmeRequestMessage message) throws PacketRejectedException {
 		//TODO
 	}
 
