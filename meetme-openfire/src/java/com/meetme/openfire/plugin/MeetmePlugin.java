@@ -13,7 +13,6 @@ import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
-import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +20,9 @@ import com.meetme.openfire.handler.AbstractIQHandler;
 import com.meetme.openfire.handler.IQCreateMeetHandler;
 import com.meetme.openfire.handler.IQGetMeetRequestsHandler;
 import com.meetme.openfire.handler.IQGetMeetsHandler;
+import com.meetme.openfire.handler.IQGetMyRequestsHandler;
 import com.meetme.openfire.interceptor.MessageInterceptor;
-import com.meetme.openfire.packet.MeetmeRequestMessage;
+import com.meetme.openfire.packet.MeetingMessage;
 
 /**
  * Plugin initializes managers for packing intercept and request managing
@@ -59,7 +59,7 @@ public class MeetmePlugin implements Plugin {
 		InterceptorManager.getInstance().addInterceptor(messageInterceptor);
         
         //Create Meetme message extension
-        MeetmeRequestMessage.initialize();
+        MeetingMessage.initialize();
         
         //Init IQ messages handlers
         XMPPServer server = XMPPServer.getInstance();
@@ -67,6 +67,7 @@ public class MeetmePlugin implements Plugin {
         iqHandlers.add(new IQCreateMeetHandler());
         iqHandlers.add(new IQGetMeetsHandler());
         iqHandlers.add(new IQGetMeetRequestsHandler());
+        iqHandlers.add(new IQGetMyRequestsHandler());
         
         for (AbstractIQHandler iqHandler : iqHandlers) {
         	server.getIQRouter().addHandler(iqHandler);
@@ -83,7 +84,7 @@ public class MeetmePlugin implements Plugin {
         log.info("Meetme plugin destroyed");
         
         //Remove MeetmeRequestMessage extension
-        MeetmeRequestMessage.destroy();
+        MeetingMessage.destroy();
         
         // Remove the iqMeetHandler features in disco.
         XMPPServer server = XMPPServer.getInstance();

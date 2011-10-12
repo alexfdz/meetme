@@ -12,9 +12,9 @@ import org.jivesoftware.util.NotFoundException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
-import com.meetme.openfire.packet.IQMeetMessage;
 import com.meetme.openfire.packet.IQMeetsMessage;
-import com.meetme.openfire.packet.IQMeetsType;
+import com.meetme.openfire.packet.IQMeetsTimeType;
+import com.meetme.openfire.packet.MeetingMessage;
 import com.meetme.openfire.util.Constants;
 import com.meetme.openfire.vo.Meeting;
 import com.meetme.openfire.vo.MeetingRequest;
@@ -23,6 +23,7 @@ import com.meetme.openfire.vo.MeetingRequestStatus;
 /**
  * Implements the TYPE_IQ {@link Constants.IQ_GET_MEETS_NAMESPACE} protocol. Allows users to 
  * obtain his meetings form database.
+ * The user can ask about specific time restictions @see {@link IQMeetsTimeType}
  *
  * @author alex
  *
@@ -47,11 +48,12 @@ public class IQGetMeetsHandler extends AbstractIQHandler {
         }
         
         IQMeetsMessage message = new IQMeetsMessage(((IQ)packet).getChildElement());
-        IQMeetsType type = message.getType();
+        IQMeetsTimeType type = message.getType();
         Element response = reply.setChildElement(Constants.QUERY_ELEMENT_NAME,
         		Constants.IQ_GET_MEETS_NAMESPACE);
-        IQMeetsMessage meetsContainer = new IQMeetsMessage();
-        List<IQMeetMessage> meets = new ArrayList<IQMeetMessage>();
+        IQMeetsMessage meetsContainer = new IQMeetsMessage(Constants.MEETS_ELEMENT_NAME, 
+        		Constants.IQ_GET_MEETS_NAMESPACE);
+        List<MeetingMessage> meets = new ArrayList<MeetingMessage>();
         List<Meeting> resolvedMeetings = null;
         try {
 			resolvedMeetings = this.resolveMeetings(user, type);
@@ -62,27 +64,27 @@ public class IQGetMeetsHandler extends AbstractIQHandler {
         
         if(resolvedMeetings != null){
         	for (Meeting meeting : resolvedMeetings) {
-        		IQMeetMessage meetMessage = this.resolveMeetmeMessage(meeting);
+        		MeetingMessage meetMessage = this.resolveMeetmeMessage(meeting);
         		meets.add(meetMessage);
 			}
         }
+        
+        //Set the resolved meetings in container
         
         meetsContainer.setMeets(meets);
         response.add(meetsContainer.getElement());
 		return reply;
 	}
 	
-	private List<Meeting> resolveMeetings(String user, IQMeetsType type) throws NotFoundException{
+	private List<Meeting> resolveMeetings(String user, IQMeetsTimeType type) throws NotFoundException{
 		List<Meeting> meetings = null;
-		if(IQMeetsType.all.equals(type)){
-			meetings = Meeting.findByUser(user);
-		}else if(IQMeetsType.current.equals(type)){
-			//TODO coger todos los meetings con time > actual || time == null y estado=activos
-			meetings = Meeting.findByUser(user);
-		}else if(IQMeetsType.past.equals(type)){
-			//TODO coger todos los meetings con time < actual  y estado=activos
-			meetings = Meeting.findByUser(user);
-		}else if(IQMeetsType.custom.equals(type)){
+		if(IQMeetsTimeType.all.equals(type)){
+			meetings = Meeting.findAllEnabledByOwner(user);
+		}else if(IQMeetsTimeType.current.equals(type)){
+			meetings = Meeting.findCurrentEnabledByOwner(user);
+		}else if(IQMeetsTimeType.past.equals(type)){
+			meetings = Meeting.findPastEnabledByOwner(user);
+		}else if(IQMeetsTimeType.custom.equals(type)){
 			//TODO A implementar en futuras fases
 			throw new NotFoundException("IQMeetsType not found");
 		}else{
@@ -91,17 +93,11 @@ public class IQGetMeetsHandler extends AbstractIQHandler {
 		return meetings;
 	}
 	
-	private IQMeetMessage resolveMeetmeMessage(Meeting meeting){
-		IQMeetMessage message = null;
+	private MeetingMessage resolveMeetmeMessage(Meeting meeting){
+		MeetingMessage message = null;
 		if(meeting != null){
-			message = new IQMeetMessage();
-			//Include the basic meeting contents
-			message.setDescription(meeting.getDescription());
-			message.setId(meeting.getId().toString());
-			message.setPosition(meeting.getPosition());
-			message.setTime(meeting.getTime());
-			//resolve the requests type counts
-			
+			message = MeetingMessage.parseMeeting(meeting);
+		
 			int accepted = 0;
 			int denied = 0;
 			int unknow = 0;

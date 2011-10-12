@@ -10,16 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.PacketExtension;
 
-import com.meetme.openfire.util.Constants;
-
 /**
- * Represents a message that could be use for create/modify a meeting.
- * <p/>
- * The message could be of the following types:
- * <ul>
- * <li>create -> Indicates a form to fill out.</li>
- * </ul>
- * <p/>
+ * Represents a message of meetings IQs.
+ * 
  * @author alex
  *
  */
@@ -29,27 +22,24 @@ public class IQMeetsMessage extends PacketExtension{
     
     
     public static final String TYPE_ATTRIBUTE = "type";
+    
+    public static final String ID_ATTRIBUTE = "id";
 
     public IQMeetsMessage(Element element) {
 		super(element);
 	}
     
-    public IQMeetsMessage(IQMeetsType type) {
-        super(Constants.MEETS_ELEMENT_NAME, Constants.IQ_GET_MEETS_NAMESPACE);
-        this.setType(type);
-    }
-    
-    public IQMeetsMessage() {
-        super(Constants.MEETS_ELEMENT_NAME, Constants.IQ_GET_MEETS_NAMESPACE);
+    public IQMeetsMessage(String name, String namespace) {
+        super(name, namespace);
     }
     
     /**
      * Sets a list of {@link IQMeetMessage}
      * @param meets
      */
-    public void setMeets(List<IQMeetMessage> meets){
+    public void setMeets(List<MeetingMessage> meets){
     	if(meets != null){
-    		for (IQMeetMessage meet : meets) {
+    		for (MeetingMessage meet : meets) {
     			this.element.add(meet.getElement());
     		}
     	}
@@ -59,25 +49,53 @@ public class IQMeetsMessage extends PacketExtension{
      * Returns the type of this iq message.
      *
      * @return the message type.
-     * @see IQMeetsType
+     * @see IQMeetsTimeType
      */
-    public IQMeetsType getType() {
+    public IQMeetsTimeType getType() {
         String type = element.elementTextTrim(IQMeetsMessage.TYPE_ATTRIBUTE);
-        return IQMeetsType.fromString(type);
+        return IQMeetsTimeType.fromString(type);
     }
     
     /**
      * Sets the type of this message.
      *
      * @param type the message type.
-     * @see IQMeetsType
+     * @see IQMeetsTimeType
      */
-    public void setType(IQMeetsType type) {
+    public void setType(IQMeetsTimeType type) {
         if(element.element(IQMeetsMessage.TYPE_ATTRIBUTE) != null){
     		element.remove(element.element(IQMeetsMessage.TYPE_ATTRIBUTE));
     	}
         if(type != null){
         	element.addElement(IQMeetsMessage.TYPE_ATTRIBUTE).setText(type.getCode().toString());
+        }
+    }
+    
+    /**
+     * Returns the id of this meet message.
+     *
+     * @return the id.
+     */
+    public Long getId() {
+    	Long id = null;
+        String value = element.elementTextTrim(IQMeetsMessage.ID_ATTRIBUTE);
+        if(value != null){
+        	id = Long.parseLong(value);
+        }
+        return id;
+    }
+    
+    /**
+     * Sets the id of this message.
+     *
+     * @param the message id.
+     */
+    public void setId(String id) {
+    	if(element.element(IQMeetsMessage.ID_ATTRIBUTE) != null){
+    		element.remove(element.element(IQMeetsMessage.ID_ATTRIBUTE));
+    	}
+        if(id != null){
+        	element.addElement(IQMeetsMessage.ID_ATTRIBUTE).setText(id);
         }
     }
     

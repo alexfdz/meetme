@@ -29,14 +29,13 @@ import com.meetme.openfire.util.Constants;
  * @author alex
  *
  */
-public class IQMeetMessage extends PacketExtension{
+public class IQMeetRequestMessage extends PacketExtension{
 	
-	private static final Logger log = LoggerFactory.getLogger(IQMeetMessage.class);
+	private static final Logger log = LoggerFactory.getLogger(IQMeetRequestMessage.class);
 	
-    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(
-            XMPPConstants.XMPP_DELAY_DATETIME_FORMAT);
+    private static final SimpleDateFormat UTC_FORMAT = new SimpleDateFormat(XMPPConstants.XMPP_DATETIME_FORMAT);
     private static final FastDateFormat FAST_UTC_FORMAT =
-            FastDateFormat.getInstance(XMPPConstants.XMPP_DELAY_DATETIME_FORMAT,
+            FastDateFormat.getInstance(XMPPConstants.XMPP_DATETIME_FORMAT,
             TimeZone.getTimeZone("UTC"));
     
     
@@ -50,16 +49,13 @@ public class IQMeetMessage extends PacketExtension{
     
 	public static void init(){
 		UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
-        // Register that MeetPacket uses the jabber:x:data namespace
-        registeredExtensions.put(QName.get(Constants.MEET_ELEMENT_NAME, 
-        		Constants.MEET_NAMESPACE), IQMeetMessage.class);
 	}
 	
-	public IQMeetMessage(Element element) {
+	public IQMeetRequestMessage(Element element) {
 		super(element);
 	}
 
-	public IQMeetMessage() {
+	public IQMeetRequestMessage() {
 		super(Constants.MEET_ELEMENT_NAME, Constants.MEET_NAMESPACE);
 	}
 	
@@ -117,7 +113,7 @@ public class IQMeetMessage extends PacketExtension{
      */
     public Long getId() {
     	Long id = null;
-        String value = element.elementTextTrim(IQMeetMessage.ID_ATTRIBUTE);
+        String value = element.elementTextTrim(IQMeetRequestMessage.ID_ATTRIBUTE);
         if(value != null){
         	id = Long.parseLong(value);
         }
@@ -130,11 +126,11 @@ public class IQMeetMessage extends PacketExtension{
      * @param the message id.
      */
     public void setId(String id) {
-    	if(element.element(IQMeetMessage.ID_ATTRIBUTE) != null){
-    		element.remove(element.element(IQMeetMessage.ID_ATTRIBUTE));
+    	if(element.element(IQMeetRequestMessage.ID_ATTRIBUTE) != null){
+    		element.remove(element.element(IQMeetRequestMessage.ID_ATTRIBUTE));
     	}
         if(id != null){
-        	element.addElement(IQMeetMessage.ID_ATTRIBUTE).setText(id);
+        	element.addElement(IQMeetRequestMessage.ID_ATTRIBUTE).setText(id);
         }
     }
     
@@ -145,11 +141,11 @@ public class IQMeetMessage extends PacketExtension{
      */
     public void setDescription(String description) {
         // Remove an existing description element.
-        if (element.element(IQMeetMessage.DESCRIPTON_ELEMENT) != null) {
-            element.remove(element.element(IQMeetMessage.DESCRIPTON_ELEMENT));
+        if (element.element(IQMeetRequestMessage.DESCRIPTON_ELEMENT) != null) {
+            element.remove(element.element(IQMeetRequestMessage.DESCRIPTON_ELEMENT));
         }
         if(description != null){
-        	element.addElement(IQMeetMessage.DESCRIPTON_ELEMENT).setText(description);
+        	element.addElement(IQMeetRequestMessage.DESCRIPTON_ELEMENT).setText(description);
         }
     }
     
@@ -159,7 +155,7 @@ public class IQMeetMessage extends PacketExtension{
      * @return description of the message.
      */
     public String getDescription() {
-        return element.elementTextTrim(IQMeetMessage.DESCRIPTON_ELEMENT);
+        return element.elementTextTrim(IQMeetRequestMessage.DESCRIPTON_ELEMENT);
     }
     
     /**
@@ -169,11 +165,11 @@ public class IQMeetMessage extends PacketExtension{
      */
     public void setPosition(String position) {
         // Remove an existing description element.
-        if (element.element(IQMeetMessage.POSITION_ELEMENT) != null) {
-            element.remove(element.element(IQMeetMessage.POSITION_ELEMENT));
+        if (element.element(IQMeetRequestMessage.POSITION_ELEMENT) != null) {
+            element.remove(element.element(IQMeetRequestMessage.POSITION_ELEMENT));
         }
         if(position != null){
-        	element.addElement(IQMeetMessage.POSITION_ELEMENT).setText(position);
+        	element.addElement(IQMeetRequestMessage.POSITION_ELEMENT).setText(position);
         }
     }
     
@@ -183,7 +179,7 @@ public class IQMeetMessage extends PacketExtension{
      * @return position of the message.
      */
     public String getPosition() {
-        return element.elementTextTrim(IQMeetMessage.POSITION_ELEMENT);
+        return element.elementTextTrim(IQMeetRequestMessage.POSITION_ELEMENT);
     }
     
     /**
@@ -192,11 +188,11 @@ public class IQMeetMessage extends PacketExtension{
      * @return time of the meet.
      */
     public Date getTime() {
-        String time = element.elementTextTrim(IQMeetMessage.TIME_ELEMENT);
+        String time = element.elementTextTrim(IQMeetRequestMessage.TIME_ELEMENT);
         Date result = null;
         if (time != null) {
         	try {
-				result = IQMeetMessage.parseDate(time);
+				result = IQMeetRequestMessage.parseDate(time);
 			} catch (ParseException e) {
 				log.error("Error parsing meetme message date", e);
 			}
@@ -212,17 +208,17 @@ public class IQMeetMessage extends PacketExtension{
     public void setTime(Date time) {
         // Remove an existing description element.
     	String value = null;
-        if (element.element(IQMeetMessage.TIME_ELEMENT) != null) {
-            element.remove(element.element(IQMeetMessage.TIME_ELEMENT));
+        if (element.element(IQMeetRequestMessage.TIME_ELEMENT) != null) {
+            element.remove(element.element(IQMeetRequestMessage.TIME_ELEMENT));
         }
         if(time != null){
         	 try {
-     			value = IQMeetMessage.formatDate(time);
+     			value = IQMeetRequestMessage.formatDate(time);
      		} catch (ParseException e) {
      			log.error("Error formatting meetme message date", e);
      		}
              if(value != null){
-             	element.addElement(IQMeetMessage.TIME_ELEMENT).setText(value);
+             	element.addElement(IQMeetRequestMessage.TIME_ELEMENT).setText(value);
              }
         }
     }
@@ -234,7 +230,7 @@ public class IQMeetMessage extends PacketExtension{
      */
     public Integer getAccepted() {
     	Integer count = null;
-        String value = element.elementTextTrim(IQMeetMessage.ACCEPTED_ELEMENT);
+        String value = element.elementTextTrim(IQMeetRequestMessage.ACCEPTED_ELEMENT);
         if(value != null){
         	count = Integer.parseInt(value);
         }
@@ -247,11 +243,11 @@ public class IQMeetMessage extends PacketExtension{
      * @param the message accepted requests.
      */
     public void setAccepted(Integer count) {
-    	if(element.element(IQMeetMessage.ACCEPTED_ELEMENT) != null){
-    		element.remove(element.element(IQMeetMessage.ACCEPTED_ELEMENT));
+    	if(element.element(IQMeetRequestMessage.ACCEPTED_ELEMENT) != null){
+    		element.remove(element.element(IQMeetRequestMessage.ACCEPTED_ELEMENT));
     	}
         if(count != null){
-        	element.addElement(IQMeetMessage.ACCEPTED_ELEMENT).setText(count.toString());
+        	element.addElement(IQMeetRequestMessage.ACCEPTED_ELEMENT).setText(count.toString());
         }
     }
     
@@ -262,7 +258,7 @@ public class IQMeetMessage extends PacketExtension{
      */
     public Integer getDenied() {
     	Integer count = null;
-        String value = element.elementTextTrim(IQMeetMessage.DENIED_ELEMENT);
+        String value = element.elementTextTrim(IQMeetRequestMessage.DENIED_ELEMENT);
         if(value != null){
         	count = Integer.parseInt(value);
         }
@@ -275,11 +271,11 @@ public class IQMeetMessage extends PacketExtension{
      * @param the message denied requests.
      */
     public void setDenied(Integer count) {
-    	if(element.element(IQMeetMessage.DENIED_ELEMENT) != null){
-    		element.remove(element.element(IQMeetMessage.DENIED_ELEMENT));
+    	if(element.element(IQMeetRequestMessage.DENIED_ELEMENT) != null){
+    		element.remove(element.element(IQMeetRequestMessage.DENIED_ELEMENT));
     	}
         if(count != null){
-        	element.addElement(IQMeetMessage.DENIED_ELEMENT).setText(count.toString());
+        	element.addElement(IQMeetRequestMessage.DENIED_ELEMENT).setText(count.toString());
         }
     }
     
@@ -290,7 +286,7 @@ public class IQMeetMessage extends PacketExtension{
      */
     public Integer getUnknow() {
     	Integer count = null;
-        String value = element.elementTextTrim(IQMeetMessage.UNKNOW_ELEMENT);
+        String value = element.elementTextTrim(IQMeetRequestMessage.UNKNOW_ELEMENT);
         if(value != null){
         	count = Integer.parseInt(value);
         }
@@ -303,26 +299,26 @@ public class IQMeetMessage extends PacketExtension{
      * @param the message unknow requests.
      */
     public void setUnknow(Integer count) {
-    	if(element.element(IQMeetMessage.UNKNOW_ELEMENT) != null){
-    		element.remove(element.element(IQMeetMessage.UNKNOW_ELEMENT));
+    	if(element.element(IQMeetRequestMessage.UNKNOW_ELEMENT) != null){
+    		element.remove(element.element(IQMeetRequestMessage.UNKNOW_ELEMENT));
     	}
         if(count != null){
-        	element.addElement(IQMeetMessage.UNKNOW_ELEMENT).setText(count.toString());
+        	element.addElement(IQMeetRequestMessage.UNKNOW_ELEMENT).setText(count.toString());
         }
     }
     
     
-    public IQMeetMessage createCopy() {
-        return new IQMeetMessage(this.getElement().createCopy());
+    public IQMeetRequestMessage createCopy() {
+        return new IQMeetRequestMessage(this.getElement().createCopy());
     }
     
     /**
-     * Create a new {@link IQMeetMessage} instance form an {@link Element} contents
+     * Create a new {@link IQMeetRequestMessage} instance form an {@link Element} contents
      * @param element
      * @return
      */
-    public static IQMeetMessage fromElement(Element element){
-    	return new IQMeetMessage(element);
+    public static IQMeetRequestMessage fromElement(Element element){
+    	return new IQMeetRequestMessage(element);
     }
     
 }

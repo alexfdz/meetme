@@ -4,10 +4,10 @@
 package com.meetme.openfire.vo;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.meetme.openfire.handler.IQCreateMeetHandler;
-import com.meetme.openfire.packet.MeetmeRequestMessage;
+import com.meetme.openfire.packet.MeetingMessage;
 import com.meetme.openfire.util.Constants;
 
 /**
@@ -32,8 +32,7 @@ import com.meetme.openfire.util.Constants;
 @JiveID(Constants.MEET_JID)
 public class Meeting {
 	
-	
-	//TODO: Faltara un estado para indicar cuando se quiere realizar un borrado logico del meeting
+	//TODO: Añadir columna para fecha de creacion
 	
 	private static final Logger log = LoggerFactory.getLogger(Meeting.class);
 	
@@ -46,9 +45,15 @@ public class Meeting {
     private static final String LOAD =
             "SELECT owner, description, position, start_time, status" +
                     " FROM ofMeeting WHERE id=?";
-    private static final String FIND_BY_USER =
-            "SELECT id, description, position, start_time, status" +
+    private static final String FIND_BY_OWNER =
+            "SELECT id, owner, description, position, start_time, status" +
                     " FROM ofMeeting WHERE owner=? and status=?";
+    private static final String FIND_CURRENT_BY_OWNER =
+            "SELECT id, owner, description, position, start_time, status" +
+                    " FROM ofMeeting WHERE owner=? and status=? and (start_time >= NOW() or start_time IS NULL)";
+    private static final String FIND_PAST_BY_OWNER =
+            "SELECT id, owner, description, position, start_time, status" +
+                    " FROM ofMeeting WHERE owner=? and status=? and start_time IS NOT NULL and start_time < NOW() ";
     private static final String DELETE =
             "DELETE from ofMeeting WHERE id=?";
     private static final String LOAD_REQUESTS =
@@ -76,7 +81,7 @@ public class Meeting {
 	/**
 	 * The start time of the event in UTC FORMAT
 	 */
-	private Date time;
+	private Timestamp time;
 	
 	/**
 	 * The status of the meeting.
@@ -100,18 +105,18 @@ public class Meeting {
 	 * @see IQCreateMeetHandler
 	 */
 	public Meeting(Element element) {
-		this(MeetmeRequestMessage.fromElement(element));
+		this(MeetingMessage.fromElement(element));
 	}
 	
 	/**
-	 * Initializes de {@link Meeting} element with the contents of an {@link MeetmeRequestMessage}
+	 * Initializes de {@link Meeting} element with the contents of an {@link MeetingMessage}
 	 */
-	public Meeting(MeetmeRequestMessage message){
+	public Meeting(MeetingMessage message){
 		this.id = message.getId();
 		this.description = message.getDescription();
 		this.position = message.getPosition();
 		if(message.getTime() != null){
-			this.time = new Date(message.getTime().getTime());
+			this.time = new Timestamp(message.getTime().getTime());
 		}
 	}
 	
@@ -142,7 +147,7 @@ public class Meeting {
             pstmt.setString(2, owner);
             pstmt.setString(3, description);
             pstmt.setString(4, position);
-            pstmt.setDate(5, time);
+            pstmt.setTimestamp(5, time);
             pstmt.setInt(6, status.getCode());
             
             pstmt.executeUpdate();
@@ -179,7 +184,7 @@ public class Meeting {
             this.owner = rs.getString(1);
             this.description = rs.getString(2);
             this.position = rs.getString(3);
-            this.time = rs.getDate(4);
+            this.time = rs.getTimestamp(4);
             this.status = MeetingStatus.fromInt(rs.getInt(5));
             rs.close();
             pstmt.close();
@@ -245,7 +250,7 @@ public class Meeting {
             pstmt.setString(1, owner);
             pstmt.setString(2, description);
             pstmt.setString(3, position);
-            pstmt.setDate(4, time);
+            pstmt.setTimestamp(4, time);
             pstmt.setInt(5, status.getCode());
             pstmt.executeUpdate();
             pstmt.close();
@@ -314,11 +319,11 @@ public class Meeting {
 		this.position = position;
 	}
 
-	public Date getTime() {
+	public Timestamp getTime() {
 		return time;
 	}
 
-	public void setTime(Date time) {
+	public void setTime(Timestamp time) {
 		this.time = time;
 	}
 
@@ -346,33 +351,45 @@ public class Meeting {
 	}
 	
 	/**
-     * Loads all user meetings from database not deleted.
+     * Loads all user meetings from database not deleted for a specific owner.
      *
      * @throws NotFoundException if the meeting could not be loaded.
      */
-    public static List<Meeting> findByUser(String username) throws NotFoundException {
+    public static List<Meeting> findAllEnabledByOwner(String owner) throws NotFoundException {
+        return Meeting.findByOwner(owner, FIND_BY_OWNER, MeetingStatus.created);
+    }
+    
+    /**
+     * Loads current user meetings from database not deleted for a specific owner.
+     *
+     * @throws NotFoundException if the meeting could not be loaded.
+     */
+    public static List<Meeting> findCurrentEnabledByOwner(String owner) throws NotFoundException {
+        return Meeting.findByOwner(owner, FIND_CURRENT_BY_OWNER, MeetingStatus.created);
+    }
+    
+    /**
+     * Loads past user meetings from database not deleted for a specific owner.
+     *
+     * @throws NotFoundException if the meeting could not be loaded.
+     */
+    public static List<Meeting> findPastEnabledByOwner(String owner) throws NotFoundException {
+        return Meeting.findByOwner(owner, FIND_PAST_BY_OWNER, MeetingStatus.created);
+    }
+    
+    private static List<Meeting> findByOwner(String username, String statement, MeetingStatus status) 
+    		throws NotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         List<Meeting> meetings = null;
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(FIND_BY_USER);
+            pstmt = con.prepareStatement(statement);
             pstmt.setString(1, username);
-            pstmt.setInt(2, MeetingStatus.created.getCode());
+            pstmt.setInt(2, status.getCode());
             rs = pstmt.executeQuery();
-            meetings = new ArrayList<Meeting>();
-            Meeting meeting = null;
-            while(rs.next()){
-            	meeting = new Meeting();
-            	meeting.setId(rs.getLong(1));
-            	meeting.setOwner(username);
-            	meeting.setDescription(rs.getString(2));
-            	meeting.setPosition(rs.getString(3));
-            	meeting.setTime(rs.getDate(4));
-            	meeting.setStatus(MeetingStatus.fromInt(rs.getInt(5)));
-                meetings.add(meeting);
-            }
+            meetings = parseResultSet(rs);
             rs.close();
             pstmt.close();
         }
@@ -384,6 +401,33 @@ public class Meeting {
         }
         return meetings;
     }
+    
+    /**
+     * Parses a {@link ResultSet} containing the result of a {@link PreparedStatement} 
+     * with order parameters: id, owner, description, position, start_time, status
+     * @param rs
+     * @return
+     * @throws SQLException
+     */
+    public static List<Meeting> parseResultSet(ResultSet rs) throws SQLException{
+    	List<Meeting> meetings = null;
+    	if(rs != null){
+    		meetings = new ArrayList<Meeting>();
+            Meeting meeting = null;
+            while(rs.next()){
+            	meeting = new Meeting();
+            	meeting.setId(rs.getLong(1));
+            	meeting.setOwner(rs.getString(2));
+            	meeting.setDescription(rs.getString(3));
+            	meeting.setPosition(rs.getString(4));
+            	meeting.setTime(rs.getTimestamp(5));
+            	meeting.setStatus(MeetingStatus.fromInt(rs.getInt(6)));
+                meetings.add(meeting);
+            }
+    	}
+    	return meetings;
+    }
+    
 	
 
 }

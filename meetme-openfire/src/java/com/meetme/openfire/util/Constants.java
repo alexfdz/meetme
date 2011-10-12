@@ -4,6 +4,7 @@
 package com.meetme.openfire.util;
 
 import com.meetme.openfire.handler.IQCreateMeetHandler;
+import com.meetme.openfire.handler.IQGetMeetsHandler;
 
 public class Constants {
 
@@ -21,9 +22,14 @@ public class Constants {
     public static final String IQ_GET_MEETS_NAMESPACE = "jabber:iq:getMeets";
     
     /**
-     * Namespace for IQ Get Meets message @see {@link IQGetMeetsHandler}
+     * Namespace for IQ Get Meets message @see {@link IQGetMeetRequestsHandler}
      */
     public static final String IQ_GET_MEET_REQUESTS_NAMESPACE = "jabber:iq:getMeetRequests";
+    
+    /**
+     * Namespace for IQ Get Meets message @see {@link IQGetMyRequestsHandler}
+     */
+    public static final String IQ_GET_MY_REQUESTS_NAMESPACE = "jabber:iq:getMyRequests";
     
     /**
      * Element name of the meet message packet extension.

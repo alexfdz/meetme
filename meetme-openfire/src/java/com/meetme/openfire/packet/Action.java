@@ -18,32 +18,22 @@ public enum Action {
 	/**
 	 * User try to create a new meeting request
 	 */
-	create(1),
-
-	/**
-	 * Meeting request for an user
-	 */
-	request(2),
-
-	/**
-	 * User try to modify the meeting
-	 */
-	modify(3),
-
+	create(0),
+	
 	/**
 	 * User accepts the meeting
 	 */
-	accept(4),
+	accept(1),
 
 	/**
 	 * User denies the meeting
 	 */
-	deny(5),
-
+	deny(2), 
+	
 	/**
-	 * User respons without confirmation
+	 * User try to modify the meeting
 	 */
-	noResponse(6);
+	modify(3);
 
 	public Integer code;
 
@@ -80,23 +70,17 @@ public enum Action {
 	public static Action fromInt(Integer code) {
 		Action result = unknow;
 		switch (code) {
-		case 1:
+		case 0:
 			result = create;
 			break;
+		case 1:
+			result = accept;
+			break;
 		case 2:
-			result = request;
+			result = deny;
 			break;
 		case 3:
 			result = modify;
-			break;
-		case 4:
-			result = accept;
-			break;
-		case 5:
-			result = deny;
-			break;
-		case 6:
-			result = noResponse;
 			break;
 		}
 		return result;

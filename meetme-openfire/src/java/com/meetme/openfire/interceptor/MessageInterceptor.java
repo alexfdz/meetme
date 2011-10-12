@@ -16,8 +16,9 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketExtension;
 
 import com.meetme.openfire.packet.Action;
-import com.meetme.openfire.packet.MeetmeRequestMessage;
+import com.meetme.openfire.packet.MeetingMessage;
 import com.meetme.openfire.util.Constants;
+import com.meetme.openfire.vo.Meeting;
 import com.meetme.openfire.vo.MeetingRequest;
 import com.meetme.openfire.vo.MeetingRequestStatus;
 
@@ -39,8 +40,8 @@ public class MessageInterceptor implements PacketInterceptor {
         }
 		if(packet instanceof Message){
 			PacketExtension extension = packet.getExtension(Constants.MEET_ELEMENT_NAME, Constants.MEET_NAMESPACE);
-	        if (extension instanceof MeetmeRequestMessage) {
-	        	MeetmeRequestMessage message = (MeetmeRequestMessage) extension;
+	        if (extension instanceof MeetingMessage) {
+	        	MeetingMessage message = (MeetingMessage) extension;
 	        	
 	        	Action action = message.getAction();
 	        	
@@ -56,8 +57,6 @@ public class MessageInterceptor implements PacketInterceptor {
 	        	
 	        	if(Action.create.equals(action)){
 	        		this.interceptCreateMessage(packet, message);
-	        	}else if(Action.request.equals(action)){
-	        		this.interceptRequestMessage(message);
 	        	}else if(Action.deny.equals(action)){
 	        		this.interceptDenyMessage(message);
 	        	}else if(Action.accept.equals(action)){
@@ -78,7 +77,7 @@ public class MessageInterceptor implements PacketInterceptor {
 	 * @param message
 	 * @throws PacketRejectedException
 	 */
-	private void interceptCreateMessage(Packet packet, MeetmeRequestMessage message) throws PacketRejectedException {
+	private void interceptCreateMessage(Packet packet, MeetingMessage message) throws PacketRejectedException {
 		if(packet.getTo() == null || packet.getTo().getNode() == null){
 			throw new PacketRejectedException("To is null");
 		}
@@ -88,11 +87,31 @@ public class MessageInterceptor implements PacketInterceptor {
 			throw new PacketRejectedException("MeetId is null");
 		}
 		//Initialized the MeetingRequest instance
+		//Check if meeting exist in database
+		Meeting meeting = null;
+		try {
+			meeting = new Meeting(meetId);
+		} catch (NotFoundException e) {
+			log.error(e.getMessage(), e);
+			throw new PacketRejectedException("Meeting no exist", e);
+		}
 		MeetingRequest request = new MeetingRequest();
-		request.setMeetingId(meetId);
+		request.setMeeting(meeting);
 		request.setUser(user);
 		request.setStatus(MeetingRequestStatus.created);
 		
+		//Check if meeting request already exist in database
+		try {
+			if(request.exist()){
+				PacketRejectedException e = new PacketRejectedException("Meeting request " +
+						"already exist for this meeting and user");
+				log.error(e.getMessage(), e);
+				throw e;
+			}
+		} catch (SQLException e) {
+			log.error(e.getMessage(), e);
+			throw new PacketRejectedException(e);
+		}
 		//Save it in db to get the meeting request Id
 		Long id = null;
 		try {
@@ -105,16 +124,8 @@ public class MessageInterceptor implements PacketInterceptor {
 		if(id != null){
 			//Inserts the id of the new meetingRequest instance, and modifies the action referenced
 			message.setId(id.toString());
-			message.setAction(Action.request);
 		}
 		
-	}
-	
-	/**
-	 * @param message
-	 */
-	private void interceptRequestMessage(MeetmeRequestMessage message) throws PacketRejectedException {
-		//TODO Para que sirve????
 	}
 	
 	/**
@@ -122,7 +133,7 @@ public class MessageInterceptor implements PacketInterceptor {
 	 * Updates the content in database instance and forwards the message to the user
 	 * @param message
 	 */
-	private void interceptDenyMessage(MeetmeRequestMessage message) throws PacketRejectedException {
+	private void interceptDenyMessage(MeetingMessage message) throws PacketRejectedException {
 		if(message.getId() == null){
 			throw new PacketRejectedException("Request id is null");
 		}
@@ -141,7 +152,6 @@ public class MessageInterceptor implements PacketInterceptor {
 		}
 		
 		request.setStatus(MeetingRequestStatus.denied);
-		message.setStatus(MeetingRequestStatus.denied);
 		
 		try {
 			request.update();
@@ -156,7 +166,7 @@ public class MessageInterceptor implements PacketInterceptor {
 	 * Updates the content in database instance and forwards the message to the user
 	 * @param message
 	 */
-	private void interceptAcceptMessage(MeetmeRequestMessage message) throws PacketRejectedException {
+	private void interceptAcceptMessage(MeetingMessage message) throws PacketRejectedException {
 		if(message.getId() == null){
 			throw new PacketRejectedException("Request id is null");
 		}
@@ -175,7 +185,6 @@ public class MessageInterceptor implements PacketInterceptor {
 		}
 		
 		request.setStatus(MeetingRequestStatus.accepted);
-		message.setStatus(MeetingRequestStatus.accepted);
 		
 		try {
 			request.update();
@@ -188,8 +197,8 @@ public class MessageInterceptor implements PacketInterceptor {
 	/**
 	 * @param message
 	 */
-	private void interceptModifyMessage(MeetmeRequestMessage message) throws PacketRejectedException {
-		//TODO
+	private void interceptModifyMessage(MeetingMessage message) throws PacketRejectedException {
+		//TODO A implementar en futuras fases
 	}
 
 }

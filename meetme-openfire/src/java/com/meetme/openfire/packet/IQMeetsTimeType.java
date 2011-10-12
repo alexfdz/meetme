@@ -9,7 +9,7 @@ package com.meetme.openfire.packet;
  * 
  * @author alex
  */
-public enum IQMeetsType {
+public enum IQMeetsTimeType {
 	/**
 	 * Unknow type
 	 */
@@ -36,7 +36,7 @@ public enum IQMeetsType {
 
 	public Integer code;
 
-	private IQMeetsType(int c) {
+	private IQMeetsTimeType(int c) {
 		code = c;
 	}
 
@@ -45,29 +45,29 @@ public enum IQMeetsType {
 	}
 	
 	/**
-	 * Obtains the {@link IQMeetsType} value of a string
+	 * Obtains the {@link IQMeetsTimeType} value of a string
 	 * representation
 	 * @param code
-	 * @return the resolved {@link IQMeetsType} object
+	 * @return the resolved {@link IQMeetsTimeType} object
 	 */
-	public static IQMeetsType fromString(String code) {
+	public static IQMeetsTimeType fromString(String code) {
 		Integer codeInt = null;
 		try {
 			codeInt = Integer.parseInt(code);
 		} catch (NumberFormatException e) {
 			return unknow;
 		}
-		return IQMeetsType.fromInt(codeInt);
+		return IQMeetsTimeType.fromInt(codeInt);
 	}
 
 	/**
-	 * Obtains the {@link IQMeetsType} value of an int
+	 * Obtains the {@link IQMeetsTimeType} value of an int
 	 * representation
 	 * @param code
-	 * @return the resolved {@link IQMeetsType} object
+	 * @return the resolved {@link IQMeetsTimeType} object
 	 */
-	public static IQMeetsType fromInt(Integer code) {
-		IQMeetsType result = unknow;
+	public static IQMeetsTimeType fromInt(Integer code) {
+		IQMeetsTimeType result = unknow;
 		switch (code) {
 		case 0:
 			result = past;
