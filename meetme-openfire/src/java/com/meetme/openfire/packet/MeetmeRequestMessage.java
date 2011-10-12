@@ -49,11 +49,16 @@ public class MeetmeRequestMessage extends PacketExtension{
     public static final String TIME_ELEMENT = "time";
     public static final String STATUS_ELEMENT = "status";
     
-	public static void init(){
+	public static void initialize(){
 		UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
         // Register that MeetPacket uses the jabber:x:data namespace
         registeredExtensions.put(QName.get(Constants.MEET_ELEMENT_NAME, 
         		Constants.MEET_NAMESPACE), MeetmeRequestMessage.class);
+	}
+	
+	public static void destroy(){
+        registeredExtensions.remove(QName.get(Constants.MEET_ELEMENT_NAME, 
+        		Constants.MEET_NAMESPACE));
 	}
 	
 	public MeetmeRequestMessage(Element element) {

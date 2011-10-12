@@ -4,18 +4,11 @@
 package com.meetme.openfire.handler;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.IQHandlerInfo;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.util.NotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
@@ -34,32 +27,10 @@ import com.meetme.openfire.vo.MeetingRequestStatus;
  * @author alex
  *
  */
-public class IQGetMeetsHandler extends IQHandler implements ServerFeaturesProvider {
-
-	private static final Logger log = LoggerFactory.getLogger(IQGetMeetsHandler.class);
-	
-	/**
-     * Element name of the packet extension.
-     */
-    public static final String MEETS_ELEMENT_NAME = "meets";
-	
-	private IQHandlerInfo info;
+public class IQGetMeetsHandler extends AbstractIQHandler {
 	
 	public IQGetMeetsHandler() {
-		super(IQGetMeetsHandler.class.getName());
-		info = new IQHandlerInfo("getMeets", Constants.IQ_GET_MEETS_NAMESPACE);
-	}
-
-	@Override
-	public void initialize(XMPPServer server) {
-        super.initialize(server);
-    }
-	
-	@Override
-	public Iterator<String> getFeatures() {
-		ArrayList<String> features = new ArrayList<String>();
-        features.add(Constants.IQ_GET_MEETS_NAMESPACE);
-        return features.iterator();
+		super(IQGetMeetsHandler.class.getName(), Constants.IQ_GET_MEETS_NAMESPACE);
 	}
 
 	/* (non-Javadoc)
@@ -153,10 +124,4 @@ public class IQGetMeetsHandler extends IQHandler implements ServerFeaturesProvid
 		}
 		return message;
 	}
-
-	@Override
-	public IQHandlerInfo getInfo() {
-		return info;
-	}
-
 }

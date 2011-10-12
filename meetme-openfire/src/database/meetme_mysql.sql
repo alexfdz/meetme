@@ -6,6 +6,7 @@ CREATE TABLE ofMeeting (
    description     VARCHAR(255),
    position     VARCHAR(255),
    start_time     VARCHAR(255),
+   status    INTEGER     NOT NULL,
    PRIMARY KEY (id),
    FOREIGN KEY (owner) REFERENCES ofUser(username)
 );

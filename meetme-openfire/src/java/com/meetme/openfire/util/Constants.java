@@ -21,6 +21,11 @@ public class Constants {
     public static final String IQ_GET_MEETS_NAMESPACE = "jabber:iq:getMeets";
     
     /**
+     * Namespace for IQ Get Meets message @see {@link IQGetMeetsHandler}
+     */
+    public static final String IQ_GET_MEET_REQUESTS_NAMESPACE = "jabber:iq:getMeetRequests";
+    
+    /**
      * Element name of the meet message packet extension.
      */
     public static final String MEET_ELEMENT_NAME = "meet";

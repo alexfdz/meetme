@@ -4,7 +4,7 @@
 package com.meetme.openfire.vo;
 
 /**
- * Type-safe enumeration to represent the status of the Meet messages.
+ * Type-safe enumeration to represent the status of the Meet request messages.
  * 
  * @author alex
  */

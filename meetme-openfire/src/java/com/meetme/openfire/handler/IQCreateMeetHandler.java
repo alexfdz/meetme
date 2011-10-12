@@ -4,22 +4,15 @@
 package com.meetme.openfire.handler;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.IQHandlerInfo;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
-import org.jivesoftware.openfire.handler.IQHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
 
 import com.meetme.openfire.util.Constants;
 import com.meetme.openfire.vo.Meeting;
+import com.meetme.openfire.vo.MeetingStatus;
 
 /**
  * Implements the TYPE_IQ {@link Constants.IQ_MEET_ID_NAMESPACE} protocol. Allows users to create
@@ -28,27 +21,10 @@ import com.meetme.openfire.vo.Meeting;
  * @author alex
  *
  */
-public class IQCreateMeetHandler extends IQHandler implements ServerFeaturesProvider {
+public class IQCreateMeetHandler extends AbstractIQHandler{
 
-	private static final Logger log = LoggerFactory.getLogger(IQCreateMeetHandler.class);
-	
-	private IQHandlerInfo info;
-	
 	public IQCreateMeetHandler() {
-		super(IQCreateMeetHandler.class.getName());
-		info = new IQHandlerInfo("meetId", Constants.IQ_MEET_ID_NAMESPACE);
-	}
-
-	@Override
-	public void initialize(XMPPServer server) {
-        super.initialize(server);
-    }
-	
-	@Override
-	public Iterator<String> getFeatures() {
-		ArrayList<String> features = new ArrayList<String>();
-        features.add(Constants.IQ_MEET_ID_NAMESPACE);
-        return features.iterator();
+		super(IQCreateMeetHandler.class.getName(), Constants.IQ_MEET_ID_NAMESPACE);
 	}
 
 	/* (non-Javadoc)
@@ -67,6 +43,7 @@ public class IQCreateMeetHandler extends IQHandler implements ServerFeaturesProv
 		//Creation of the new meeting
 		Meeting meeting = new Meeting(((IQ)packet).getChildElement());
 		meeting.setOwner(sender);
+		meeting.setStatus(MeetingStatus.created);
 		try {
 			meeting.insert();
 		} catch (SQLException e) {
@@ -86,10 +63,4 @@ public class IQCreateMeetHandler extends IQHandler implements ServerFeaturesProv
 		
 		return reply;
 	}
-
-	@Override
-	public IQHandlerInfo getInfo() {
-		return info;
-	}
-
 }

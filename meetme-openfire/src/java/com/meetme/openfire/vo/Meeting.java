@@ -39,15 +39,16 @@ public class Meeting {
 	
 	private static final String INSERT =
             "INSERT INTO ofMeeting(id, owner, description, position, " +
-                    "start_time) VALUES (?,?,?,?,?,?)";
+                    "start_time, status) VALUES (?,?,?,?,?,?)";
 	private static final String UPDATE =
-            "UPDATE ofMeeting SET owner=?, description=?, position=?, start_time=? WHERE id=?";
+            "UPDATE ofMeeting SET owner=?, description=?, position=?, start_time=?, " +
+                    "status=? WHERE id=?";
     private static final String LOAD =
-            "SELECT owner, description, position, start_time" +
+            "SELECT owner, description, position, start_time, status" +
                     " FROM ofMeeting WHERE id=?";
     private static final String FIND_BY_USER =
-            "SELECT id, description, position, start_time" +
-                    " FROM ofMeeting WHERE owner=?";
+            "SELECT id, description, position, start_time, status" +
+                    " FROM ofMeeting WHERE owner=? and status=?";
     private static final String DELETE =
             "DELETE from ofMeeting WHERE id=?";
     private static final String LOAD_REQUESTS =
@@ -76,6 +77,11 @@ public class Meeting {
 	 * The start time of the event in UTC FORMAT
 	 */
 	private Date time;
+	
+	/**
+	 * The status of the meeting.
+	 */
+	private MeetingStatus status;
 	
 	/**
 	 * The meeting requests between the owner and requested users.
@@ -137,6 +143,7 @@ public class Meeting {
             pstmt.setString(3, description);
             pstmt.setString(4, position);
             pstmt.setDate(5, time);
+            pstmt.setInt(6, status.getCode());
             
             pstmt.executeUpdate();
             pstmt.close();
@@ -173,7 +180,7 @@ public class Meeting {
             this.description = rs.getString(2);
             this.position = rs.getString(3);
             this.time = rs.getDate(4);
-            
+            this.status = MeetingStatus.fromInt(rs.getInt(5));
             rs.close();
             pstmt.close();
         }
@@ -239,6 +246,7 @@ public class Meeting {
             pstmt.setString(2, description);
             pstmt.setString(3, position);
             pstmt.setDate(4, time);
+            pstmt.setInt(5, status.getCode());
             pstmt.executeUpdate();
             pstmt.close();
         }
@@ -314,6 +322,14 @@ public class Meeting {
 		this.time = time;
 	}
 
+	public MeetingStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(MeetingStatus status) {
+		this.status = status;
+	}
+	
 	public List<MeetingRequest> getRequests() {
 		if(requests == null){
 			try {
@@ -330,7 +346,7 @@ public class Meeting {
 	}
 	
 	/**
-     * Loads a meeting from the database.
+     * Loads all user meetings from database not deleted.
      *
      * @throws NotFoundException if the meeting could not be loaded.
      */
@@ -343,6 +359,7 @@ public class Meeting {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(FIND_BY_USER);
             pstmt.setString(1, username);
+            pstmt.setInt(2, MeetingStatus.created.getCode());
             rs = pstmt.executeQuery();
             meetings = new ArrayList<Meeting>();
             Meeting meeting = null;
@@ -353,6 +370,7 @@ public class Meeting {
             	meeting.setDescription(rs.getString(2));
             	meeting.setPosition(rs.getString(3));
             	meeting.setTime(rs.getDate(4));
+            	meeting.setStatus(MeetingStatus.fromInt(rs.getInt(5)));
                 meetings.add(meeting);
             }
             rs.close();
