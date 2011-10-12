@@ -58,7 +58,8 @@ public class MeetingMessage extends PacketExtension{
     public static final String UNKNOW_ELEMENT = "unknow";
     public static final String REQUESTS_ELEMENT = "requests";
     public static final String REQUEST_ELEMENT = "request";
-    public static final String USER_ATTRIBUTE = "user";
+    public static final String USER_ELEMENT = "user";
+    public static final String UPDATED_ELEMENT = "updated";
     
 	public static void initialize(){
 		UTC_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -354,6 +355,47 @@ public class MeetingMessage extends PacketExtension{
     }
     
     /**
+     * Returns the last updated time of the meeting request.
+     *
+     * @return the last updated time of the meeting request.
+     */
+    public Date getUpdated() {
+        String time = element.elementTextTrim(MeetingMessage.UPDATED_ELEMENT);
+        Date result = null;
+        if (time != null) {
+        	try {
+				result = MeetingMessage.parseDate(time);
+			} catch (ParseException e) {
+				log.error("Error parsing meetme message date", e);
+			}
+        }
+        return result;
+    }
+    
+    /**
+     * Sets the last updated time of the meeting request.
+     *
+     * @param the last updated time of the meeting request.
+     */
+    public void setUpdated(Date time) {
+        // Remove an existing description element.
+    	String value = null;
+        if (element.element(MeetingMessage.UPDATED_ELEMENT) != null) {
+            element.remove(element.element(MeetingMessage.UPDATED_ELEMENT));
+        }
+        if(time != null){
+       	 try {
+    			value = MeetingMessage.formatDate(time);
+    		} catch (ParseException e) {
+    			log.error("Error formatting meetme message date", e);
+    		}
+            if(value != null){
+            	element.addElement(MeetingMessage.UPDATED_ELEMENT).setText(value);
+            }
+       }
+    }
+    
+    /**
      * Returns the accepted requests of this meet message.
      *
      * @return the accepted requests.
@@ -423,8 +465,20 @@ public class MeetingMessage extends PacketExtension{
     		for (MeetingRequest meetingRequest : requests) {
     			reqElement = reqContainerElement.addElement(MeetingMessage.REQUEST_ELEMENT);
     			reqElement.addElement(MeetingMessage.ID_ATTRIBUTE).setText(meetingRequest.getId().toString());
-    			reqElement.addElement(MeetingMessage.USER_ATTRIBUTE).setText(meetingRequest.getUser());
+    			reqElement.addElement(MeetingMessage.USER_ELEMENT).setText(meetingRequest.getUser());
     			reqElement.addElement(MeetingMessage.STATUS_ELEMENT).setText(meetingRequest.getStatus().getCode().toString());
+    			
+    			String value = null;
+    	        if(meetingRequest.getUpdated() != null){
+    	       	 try {
+    	    			value = MeetingMessage.formatDate(meetingRequest.getUpdated());
+    	    		} catch (ParseException e) {
+    	    			log.error("Error formatting meetme message date", e);
+    	    		}
+    	            if(value != null){
+    	            	reqElement.addElement(MeetingMessage.UPDATED_ELEMENT).setText(value);
+    	            }
+    	       }
 			}
     	}
     }

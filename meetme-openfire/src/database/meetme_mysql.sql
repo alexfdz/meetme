@@ -16,8 +16,8 @@ CREATE TABLE ofMeetingRequest (
    meet_id       BIGINT            NOT NULL,
    requested_user     VARCHAR(32)       NOT NULL,
    status    INTEGER     NOT NULL,
+   updated     DATETIME,
    PRIMARY KEY (id),
    FOREIGN KEY (meet_id) REFERENCES ofMeeting(id) ON DELETE CASCADE,
    FOREIGN KEY (requested_user) REFERENCES ofUser(username)
 );
-

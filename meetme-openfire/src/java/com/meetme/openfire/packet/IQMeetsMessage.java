@@ -20,7 +20,6 @@ public class IQMeetsMessage extends PacketExtension{
 	
 	private static final Logger log = LoggerFactory.getLogger(IQMeetsMessage.class);
     
-    
     public static final String TYPE_ATTRIBUTE = "type";
     
     public static final String ID_ATTRIBUTE = "id";

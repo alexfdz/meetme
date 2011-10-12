@@ -7,7 +7,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import org.jivesoftware.database.DbConnectionManager;
@@ -31,33 +33,31 @@ import com.meetme.openfire.util.Constants;
 @JiveID(Constants.MEETQUERY_JID)
 public class MeetingRequest {
 	
-	//TODO: Añadir columna para fecha de actualizacion
-	
 	private static final Logger log = LoggerFactory.getLogger(Meeting.class);
 	
 	private static final String INSERT =
-            "INSERT INTO ofMeetingRequest(id, meet_id, requested_user, status)" +
-                    " VALUES (?,?,?,?)";
+            "INSERT INTO ofMeetingRequest(id, meet_id, requested_user, status, updated)" +
+                    " VALUES (?,?,?,?,?)";
 	private static final String UPDATE =
             "UPDATE ofMeetingRequest SET meet_id=?, requested_user=?," +
-            " status=? WHERE id=?";
+            " status=?, updated=? WHERE id=?";
 	private static final String LOAD =
-            "SELECT meet_id, requested_user, status" +
+            "SELECT meet_id, requested_user, status, updated" +
                     " FROM ofMeetingRequest WHERE id=?";
 	private static final String EXIST =
             "SELECT id FROM ofMeetingRequest WHERE meet_id=? and requested_user=?";
     private static final String DELETE =
             "DELETE from ofMeetingRequest WHERE id=?";
     private static final String FIND_BY_USER =
-            "SELECT meet.id, meet.owner, meet.description, meet.position, meet.start_time, meet.status, req.id, req.status " +
+            "SELECT meet.id, meet.owner, meet.description, meet.position, meet.start_time, meet.status, req.id, req.status, req.updated " +
             "from ofMeeting as meet, ofMeetingRequest as req WHERE req.meet_id = meet.id AND " +
             "req.requested_user = ? AND meet.status=?";
     private static final String FIND_CURRENT_BY_USER =
-            "SELECT meet.id, meet.owner, meet.description, meet.position, meet.start_time, meet.status, req.id, req.status " +
+            "SELECT meet.id, meet.owner, meet.description, meet.position, meet.start_time, meet.status, req.id, req.status, req.updated " +
             "from ofMeeting as meet, ofMeetingRequest as req WHERE req.meet_id = meet.id AND " +
             "req.requested_user = ? AND meet.status=? and (meet.start_time >= NOW() or meet.start_time IS NULL)";
     private static final String FIND_PAST_BY_USER =
-            "SELECT meet.id, meet.owner, meet.description, meet.position, meet.start_time, meet.status, req.id, req.status " +
+            "SELECT meet.id, meet.owner, meet.description, meet.position, meet.start_time, meet.status, req.id, req.status, req.updated " +
             "from ofMeeting as meet, ofMeetingRequest as req WHERE req.meet_id = meet.id AND " +
             "req.requested_user = ? AND meet.status=? and meet.start_time IS NOT NULL and meet.start_time < NOW() ";
     
@@ -84,6 +84,11 @@ public class MeetingRequest {
 	 * Status of the request
 	 */
 	private MeetingRequestStatus status;
+	
+	/**
+	 * The last updated time of the event in UTC FORMAT
+	 */
+	private Timestamp updated;
 	
 	/**
 	 * 
@@ -124,6 +129,7 @@ public class MeetingRequest {
      */
     public Long insert() throws SQLException {
         this.id = SequenceManager.nextID(this);
+        this.updated = new Timestamp(Calendar.getInstance().getTimeInMillis());
         Connection con = null;
         boolean abortTransaction = false;
         try {
@@ -133,6 +139,7 @@ public class MeetingRequest {
             pstmt.setLong(2, meetingId);
             pstmt.setString(3, user);
             pstmt.setInt(4, status.getCode());
+            pstmt.setTimestamp(5, updated);
             pstmt.executeUpdate();
             pstmt.close();
         }
@@ -167,7 +174,7 @@ public class MeetingRequest {
             this.meetingId = rs.getLong(1);
             this.user = rs.getString(2);
             this.status = MeetingRequestStatus.fromInt(rs.getInt(3));
-            
+            this.updated = rs.getTimestamp(4);
             rs.close();
             pstmt.close();
         }
@@ -216,6 +223,7 @@ public class MeetingRequest {
      */
     public void update() throws SQLException{
         Connection con = null;
+        this.updated = new Timestamp(Calendar.getInstance().getTimeInMillis());
         boolean abortTransaction = false;
         try {
             con = DbConnectionManager.getTransactionConnection();
@@ -223,6 +231,7 @@ public class MeetingRequest {
             pstmt.setLong(1, meeting.getId());
             pstmt.setString(2, user);
             pstmt.setInt(3, status.getCode());
+            pstmt.setTimestamp(4, updated);
             pstmt.executeUpdate();
             pstmt.close();
         }
@@ -336,6 +345,7 @@ public class MeetingRequest {
             	message = MeetingMessage.parseMeeting(meeting);
             	message.setId(rs.getString(7));
             	message.setStatus(MeetingRequestStatus.fromInt(rs.getInt(8)));
+            	message.setUpdated(rs.getTimestamp(9));
                 messagesList.add(message);
             }
     	}
@@ -390,6 +400,14 @@ public class MeetingRequest {
 
 	public void setMeetingId(Long meetingId) {
 		this.meetingId = meetingId;
+	}
+
+	public Timestamp getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(Timestamp updated) {
+		this.updated = updated;
 	}
 
 }

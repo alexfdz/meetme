@@ -57,7 +57,7 @@ public class Meeting {
     private static final String DELETE =
             "DELETE from ofMeeting WHERE id=?";
     private static final String LOAD_REQUESTS =
-            "SELECT id, requested_user, status" +
+            "SELECT id, requested_user, status, updated" +
                     " FROM ofMeetingRequest WHERE meet_id=?";
     
 	/**
@@ -222,6 +222,7 @@ public class Meeting {
             	request.setId(rs.getLong(1));
             	request.setUser(rs.getString(2));
                 request.setStatus(MeetingRequestStatus.fromInt(rs.getInt(3)));
+                request.setUpdated(rs.getTimestamp(4));
                 request.setMeeting(this);
                 request.setMeetingId(this.id);
                 this.requests.add(request);

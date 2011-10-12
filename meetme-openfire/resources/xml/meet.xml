@@ -13,7 +13,7 @@
         type="chat">
         <meet xmlns="meetme:meet">
                 <id></id> <!-- Id of the meeting request -->
-                <meetId>27</meetId> <!-- Id of the meeting -->
+                <meetId>37</meetId> <!-- Id of the meeting -->
                 <action>0</action> <!-- Action id (0=create) -->
                 <!-- info of the meeting -->
                 <position>51.521375, -0.063879</position>
@@ -35,7 +35,7 @@
 
 <iq id="V8Etv-2" type="get">
   <query xmlns="jabber:iq:getMeetRequests">
-        <id>34</id>
+        <id>37</id>
   </query>
 </iq>
 
